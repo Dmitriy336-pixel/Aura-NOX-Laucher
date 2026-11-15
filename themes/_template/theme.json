@@ -1,0 +1,240 @@
+{
+  "name": "Моя тема",
+  "colors": {
+    "button": [
+      "#34506b",
+      "#1f538d"
+    ],
+    "button_hover": [
+      "#283f55",
+      "#14375e"
+    ],
+    "button_text": [
+      "#ffffff",
+      "#DCE4EE"
+    ],
+    "button_border": [
+      "#3E454A",
+      "#949A9F"
+    ],
+    "active": [
+      "#a8660a",
+      "#27ae60"
+    ],
+    "active_hover": [
+      "#8a5408",
+      "#219653"
+    ],
+    "select_border": [
+      "#4b9574",
+      "#ffffff"
+    ],
+    "ghost_text": [
+      "#1a1a1a",
+      "#e5e5e5"
+    ],
+    "ghost_hover": [
+      "#cccccc",
+      "#474747"
+    ],
+    "danger": [
+      "#7b2d26",
+      "#7b2d26"
+    ],
+    "danger_hover": [
+      "#a03a30",
+      "#a03a30"
+    ],
+    "window_bg": [
+      "#ebebeb",
+      "#242424"
+    ],
+    "panel_bg": [
+      "#dbdbdb",
+      "#2b2b2b"
+    ],
+    "panel_top_bg": [
+      "#cfcfcf",
+      "#333333"
+    ],
+    "card_bg": [
+      "#dbdbdb",
+      "#363636"
+    ],
+    "card_hover": [
+      "#c7c7c7",
+      "#4a4a4a"
+    ],
+    "nav_selected": [
+      "#bfbfbf",
+      "#404040"
+    ],
+    "select_bg": [
+      "#cfe3f6",
+      "#2b3f55"
+    ],
+    "help_badge": [
+      "#4682B4",
+      "#4682B4"
+    ],
+    "help_text": [
+      "#ffffff",
+      "#ffffff"
+    ],
+    "text": [
+      "#1a1a1a",
+      "#DCE4EE"
+    ],
+    "text_dim": [
+      "#4c4c4c",
+      "#9e9e9e"
+    ],
+    "accent": [
+      "#14507f",
+      "#6aa9e0"
+    ],
+    "error": [
+      "#c0392b",
+      "#e5766b"
+    ],
+    "entry_bg": [
+      "#F9F9FA",
+      "#343638"
+    ],
+    "entry_border": [
+      "#979DA2",
+      "#565B5E"
+    ],
+    "entry_text": [
+      "#1a1a1a",
+      "#DCE4EE"
+    ],
+    "entry_placeholder": [
+      "#858585",
+      "#9e9e9e"
+    ],
+    "textbox_bg": [
+      "#F9F9FA",
+      "#343638"
+    ],
+    "textbox_border": [
+      "#979DA2",
+      "#565B5E"
+    ],
+    "textbox_text": [
+      "#1a1a1a",
+      "#DCE4EE"
+    ],
+    "scrollbar": [
+      "#8c8c8c",
+      "#696969"
+    ],
+    "scrollbar_hover": [
+      "#666666",
+      "#878787"
+    ],
+    "switch_off": [
+      "#939BA2",
+      "#4A4D50"
+    ],
+    "switch_knob": [
+      "#5c5c5c",
+      "#D5D9DE"
+    ],
+    "slider_track": [
+      "#939BA2",
+      "#4A4D50"
+    ],
+    "dropdown_bg": [
+      "#e5e5e5",
+      "#333333"
+    ],
+    "dropdown_hover": [
+      "#bfbfbf",
+      "#474747"
+    ],
+    "dropdown_text": [
+      "#1a1a1a",
+      "#e5e5e5"
+    ],
+    "segmented_bg": [
+      "#979DA2",
+      "#4a4a4a"
+    ],
+    "segmented_hover": [
+      "#b2b2b2",
+      "#696969"
+    ],
+    "cmd_panel_bg": [
+      "#e0e0e0",
+      "#2b2b2b"
+    ],
+    "cmd_box_bg": [
+      "#f2f2f2",
+      "#1f1f1f"
+    ],
+    "cmd_line": [
+      "#b2b2b2",
+      "#525252"
+    ],
+    "tile_border": [
+      "#777777",
+      "#888888"
+    ],
+    "tile_select": [
+      "#1a1a1a",
+      "#ffffff"
+    ],
+    "tile_text_light": [
+      "#DCE4EE",
+      "#DCE4EE"
+    ],
+    "tile_text_dark": [
+      "#1a1a1a",
+      "#1a1a1a"
+    ],
+    "caption": [
+      "#4c4c4c",
+      "#bfbfbf"
+    ],
+    "drag_source": [
+      "#f1c40f",
+      "#f1c40f"
+    ],
+    "drag_target": [
+      "#1a1a1a",
+      "#ffffff"
+    ],
+    "tooltip_bg": [
+      "#4d26fa",
+      "#4d26fa"
+    ],
+    "tooltip_text": [
+      "#ffffff",
+      "#ffffff"
+    ]
+  },
+  "shapes": {
+    "button_radius": 6,
+    "frame_radius": 6,
+    "entry_radius": 6,
+    "tile_radius": 6,
+    "sidebar_radius": 6,
+    "texture_inset": 0
+  },
+  "fonts": {
+    "family": "Segoe UI",
+    "size": 13,
+    "icon_family": "Segoe UI Symbol"
+  },
+  "tiles": {
+    "palette": [
+      "#2d6a4f",
+      "#1d4e89",
+      "#7b2d26",
+      "#5a3e85",
+      "#8a5a00",
+      "#006466"
+    ]
+  }
+}

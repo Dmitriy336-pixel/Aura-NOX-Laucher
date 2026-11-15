@@ -1,0 +1,44 @@
+Put .wav or .mp3 files here and name them after the event (case does not matter).
+No file means no sound for that event. Switch and volume: Settings, General, Sounds.
+
+launch.wav  -  a tile is launched
+error.wav  -  an error (a tile did not launch, a command failed)
+tile_add.wav  -  a tile is added
+tile_delete.wav  -  a tile is deleted
+tile_move.wav  -  a tile is moved
+select.wav  -  the selection frame moves (arrows, Tab)
+lock_on.wav  -  dragging of tiles is locked
+lock_off.wav  -  dragging of tiles is unlocked
+perf_on.wav  -  high-performance mode is on
+perf_off.wav  -  high-performance mode is off
+window_show.wav  -  the launcher is shown (hotkey or second start)
+window_hide.wav  -  the launcher is hidden to the background
+settings_open.wav  -  settings are opened
+settings_close.wav  -  settings are closed
+command.wav  -  the command bar appears
+command_ok.wav  -  a command succeeded
+notes_open.wav  -  notes are opened
+notes_close.wav  -  notes are closed
+note_new.wav  -  a note is created
+note_delete.wav  -  a note is deleted
+click.wav  -  a plain button press; fallback sound for the events below that have no file of their own
+nav.wav  -  a settings section is switched
+toggle_on.wav  -  a switch in the settings is turned on
+toggle_off.wav  -  a switch in the settings is turned off
+option.wav  -  an option is chosen or a slider is moved in the settings
+hotkey_set.wav  -  a new hotkey is assigned
+menu_open.wav  -  the tile menu is opened
+drag_start.wav  -  a tile is picked up for dragging
+hover.wav  -  the cursor is over a tile or a sidebar button (no fallback)
+note_select.wav  -  another note is selected
+note_pin.wav  -  a note is pinned
+note_unpin.wav  -  a note is unpinned
+cmd_move.wav  -  the command bar suggestion changes (arrows); falls back to select
+cmd_complete.wav  -  a suggestion is inserted (Tab)
+command_close.wav  -  the command bar is closed with Esc (no fallback)
+theme_select.wav  -  a theme is chosen
+color_set.wav  -  a tile color is chosen
+faq_toggle.wav  -  an FAQ answer is opened or closed
+copied.wav  -  text is copied (About tab)
+note_save.wav  -  a note is saved by hand (Ctrl+S)
+type.wav  -  a key is pressed in the command bar (no fallback)

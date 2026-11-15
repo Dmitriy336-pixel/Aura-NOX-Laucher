@@ -1,0 +1,241 @@
+{
+  "name": "Gothic Cyber",
+  "colors": {
+    "button": [
+      "#88002b",
+      "#5c0522"
+    ],
+    "button_hover": [
+      "#660020",
+      "#7a0026"
+    ],
+    "button_text": [
+      "#ffffff",
+      "#fce8f0"
+    ],
+    "button_border": [
+      "#b84d72",
+      "#801a3c"
+    ],
+    "active": [
+      "#d6004b",
+      "#ff0055"
+    ],
+    "active_hover": [
+      "#a30039",
+      "#ff3377"
+    ],
+    "select_border": [
+      "#3d0014",
+      "#ffffff"
+    ],
+    "ghost_text": [
+      "#260814",
+      "#fce8f0"
+    ],
+    "ghost_hover": [
+      "#e5cad6",
+      "#2e0d1b"
+    ],
+    "danger": [
+      "#a81c39",
+      "#b30036"
+    ],
+    "danger_hover": [
+      "#c72244",
+      "#e6004a"
+    ],
+    "window_bg": [
+      "#f5eff2",
+      "#0a0508"
+    ],
+    "panel_bg": [
+      "#ebe0e6",
+      "#140a10"
+    ],
+    "panel_top_bg": [
+      "#e0d1d9",
+      "#210e1a"
+    ],
+    "card_bg": [
+      "#efe3e9",
+      "#1b0e16"
+    ],
+    "card_hover": [
+      "#e3cdd8",
+      "#281321"
+    ],
+    "nav_selected": [
+      "#e3cdd8",
+      "#2c1021"
+    ],
+    "select_bg": [
+      "#edd9e3",
+      "#240d1c"
+    ],
+    "help_badge": [
+      "#a30039",
+      "#d6004b"
+    ],
+    "help_text": [
+      "#ffffff",
+      "#ffffff"
+    ],
+    "text": [
+      "#1f0610",
+      "#fce8f0"
+    ],
+    "text_dim": [
+      "#6e3b4e",
+      "#b88297"
+    ],
+    "accent": [
+      "#b80040",
+      "#ff2a75"
+    ],
+    "error": [
+      "#b31436",
+      "#ff4d6d"
+    ],
+    "entry_bg": [
+      "#ffffff",
+      "#0f070c"
+    ],
+    "entry_border": [
+      "#b85c7d",
+      "#591c37"
+    ],
+    "entry_text": [
+      "#1f0610",
+      "#fce8f0"
+    ],
+    "entry_placeholder": [
+      "#945e74",
+      "#7d475d"
+    ],
+    "textbox_bg": [
+      "#ffffff",
+      "#0f070c"
+    ],
+    "textbox_border": [
+      "#b85c7d",
+      "#591c37"
+    ],
+    "textbox_text": [
+      "#1f0610",
+      "#fce8f0"
+    ],
+    "scrollbar": [
+      "#b85c7d",
+      "#5c1f3b"
+    ],
+    "scrollbar_hover": [
+      "#88002b",
+      "#8a2451"
+    ],
+    "switch_off": [
+      "#c79eb0",
+      "#381423"
+    ],
+    "switch_knob": [
+      "#ffffff",
+      "#fce8f0"
+    ],
+    "slider_track": [
+      "#c79eb0",
+      "#381423"
+    ],
+    "dropdown_bg": [
+      "#f2e6ec",
+      "#190c15"
+    ],
+    "dropdown_hover": [
+      "#e3cdd8",
+      "#2e1320"
+    ],
+    "dropdown_text": [
+      "#1f0610",
+      "#fce8f0"
+    ],
+    "segmented_bg": [
+      "#ba8ca0",
+      "#2c1021"
+    ],
+    "segmented_hover": [
+      "#a8758b",
+      "#42182b"
+    ],
+    "cmd_panel_bg": [
+      "#ebe0e6",
+      "#140a10"
+    ],
+    "cmd_box_bg": [
+      "#ffffff",
+      "#070306"
+    ],
+    "cmd_line": [
+      "#b85c7d",
+      "#42182b"
+    ],
+    "tile_border": [
+      "#9e2b54",
+      "#8f244d"
+    ],
+    "tile_select": [
+      "#3d0014",
+      "#ff2a75"
+    ],
+    "tile_text_light": [
+      "#ffffff",
+      "#ffffff"
+    ],
+    "tile_text_dark": [
+      "#1f0610",
+      "#1f0610"
+    ],
+    "caption": [
+      "#5e2c3f",
+      "#c48da3"
+    ],
+    "drag_source": [
+      "#88002b",
+      "#ff2a75"
+    ],
+    "drag_target": [
+      "#3d0014",
+      "#ffffff"
+    ],
+    "tooltip_bg": [
+      "#1f0610",
+      "#fce8f0"
+    ],
+    "tooltip_text": [
+      "#ffffff",
+      "#1f0610"
+    ]
+  },
+  "shapes": {
+    "button_radius": 6,
+    "frame_radius": 8,
+    "entry_radius": 6,
+    "tile_radius": 8,
+    "sidebar_radius": 6,
+    "texture_inset": 0
+  },
+  "fonts": {
+    "family": "Segoe UI",
+    "size": 13
+  },
+  "tiles": {
+    "palette": [
+      "#7a0026",
+      "#a81c39",
+      "#d6004b",
+      "#ff0055",
+      "#520033",
+      "#8f005c",
+      "#330022",
+      "#6b113a"
+    ]
+  }
+}

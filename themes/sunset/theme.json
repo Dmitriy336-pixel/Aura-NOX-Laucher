@@ -1,0 +1,142 @@
+{
+  "name": "Sunset",
+  "colors": {
+    "button": [
+      "#b5532f",
+      "#a8472a"
+    ],
+    "button_hover": [
+      "#984424",
+      "#8a3b21"
+    ],
+    "button_text": [
+      "#ffffff",
+      "#F6E7DC"
+    ],
+    "active": [
+      "#4b9574",
+      "#4fa383"
+    ],
+    "active_hover": [
+      "#3c7a5e",
+      "#41886c"
+    ],
+    "select_border": [
+      "#3b2418",
+      "#ffd9b8"
+    ],
+    "ghost_text": [
+      "#3b2418",
+      "#f1ddd0"
+    ],
+    "ghost_hover": [
+      "#e5cbb9",
+      "#4a2f24"
+    ],
+    "window_bg": [
+      "#f7ece4",
+      "#241814"
+    ],
+    "panel_bg": [
+      "#efdccf",
+      "#33211a"
+    ],
+    "panel_top_bg": [
+      "#e5cbb9",
+      "#40291f"
+    ],
+    "card_bg": [
+      "#ecd5c5",
+      "#3a261d"
+    ],
+    "card_hover": [
+      "#e0c3af",
+      "#4a2f24"
+    ],
+    "nav_selected": [
+      "#e0c3af",
+      "#4a2f24"
+    ],
+    "select_bg": [
+      "#f1d3bd",
+      "#523325"
+    ],
+    "text": [
+      "#3b2418",
+      "#f1ddd0"
+    ],
+    "text_dim": [
+      "#6b4a39",
+      "#c2a08d"
+    ],
+    "accent": [
+      "#9c3f1c",
+      "#ff9a6b"
+    ],
+    "entry_bg": [
+      "#fbf4ee",
+      "#2c1c15"
+    ],
+    "entry_border": [
+      "#c9a690",
+      "#5c4034"
+    ],
+    "entry_text": [
+      "#3b2418",
+      "#f1ddd0"
+    ],
+    "textbox_bg": [
+      "#fbf4ee",
+      "#2c1c15"
+    ],
+    "textbox_border": [
+      "#c9a690",
+      "#5c4034"
+    ],
+    "textbox_text": [
+      "#3b2418",
+      "#f1ddd0"
+    ],
+    "cmd_panel_bg": [
+      "#efdccf",
+      "#2d1c15"
+    ],
+    "cmd_box_bg": [
+      "#faf1ea",
+      "#1c110c"
+    ],
+    "cmd_line": [
+      "#c9a690",
+      "#5c4034"
+    ],
+    "tile_select": [
+      "#3b2418",
+      "#ffd9b8"
+    ],
+    "drag_target": [
+      "#3b2418",
+      "#ffd9b8"
+    ],
+    "caption": [
+      "#5c3b2b",
+      "#d6b8a6"
+    ]
+  },
+  "shapes": {
+    "button_radius": 3,
+    "frame_radius": 4,
+    "entry_radius": 3,
+    "tile_radius": 3,
+    "sidebar_radius": 3
+  },
+  "tiles": {
+    "palette": [
+      "#b5532f",
+      "#c9762f",
+      "#8f3d2a",
+      "#a5612f",
+      "#6e3a2a",
+      "#4b9574"
+    ]
+  }
+}

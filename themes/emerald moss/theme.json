@@ -1,0 +1,241 @@
+{
+  "name": "Emerald Moss",
+  "colors": {
+    "window_bg": [
+      "#e8f0eb",
+      "#070d09"
+    ],
+    "panel_bg": [
+      "#f4f8f5",
+      "#101912"
+    ],
+    "panel_top_bg": [
+      "#e2ece5",
+      "#16241a"
+    ],
+    "text": [
+      "#0d1a11",
+      "#e6f5e9"
+    ],
+    "button": [
+      "#234d30",
+      "#2f5e3d"
+    ],
+    "button_hover": [
+      "#193823",
+      "#3a734c"
+    ],
+    "button_text": [
+      "#ffffff",
+      "#f0f8f2"
+    ],
+    "active": [
+      "#b85d26",
+      "#d98c52"
+    ],
+    "active_hover": [
+      "#96491c",
+      "#eba26b"
+    ],
+    "select_border": [
+      "#234d30",
+      "#6ab882"
+    ],
+    "button_border": [
+      "#234d30",
+      "#6ab882"
+    ],
+    "danger": [
+      "#a83828",
+      "#ef4444"
+    ],
+    "danger_hover": [
+      "#8a2c1f",
+      "#f87171"
+    ],
+    "ghost_text": [
+      "#0d1a11",
+      "#8ab897"
+    ],
+    "ghost_hover": [
+      "#d8e8dc",
+      "#1b2e20"
+    ],
+    "text_dim": [
+      "#36593f",
+      "#8ab897"
+    ],
+    "accent": [
+      "#234d30",
+      "#6ab882"
+    ],
+    "error": [
+      "#a83828",
+      "#ef4444"
+    ],
+    "card_bg": [
+      "#ebf5ee",
+      "#152419"
+    ],
+    "card_hover": [
+      "#e0ede4",
+      "#1c2e21"
+    ],
+    "nav_selected": [
+      "#d2e4d5",
+      "#213825"
+    ],
+    "select_bg": [
+      "#d8e8dc",
+      "#192c1e"
+    ],
+    "help_badge": [
+      "#b85d26",
+      "#d98c52"
+    ],
+    "help_text": [
+      "#ffffff",
+      "#ffffff"
+    ],
+    "entry_bg": [
+      "#ffffff",
+      "#0d140f"
+    ],
+    "entry_border": [
+      "#6ab882",
+      "#2f5e3d"
+    ],
+    "entry_text": [
+      "#0d1a11",
+      "#e6f5e9"
+    ],
+    "entry_placeholder": [
+      "#507a5c",
+      "#6b9678"
+    ],
+    "textbox_bg": [
+      "#ffffff",
+      "#0d140f"
+    ],
+    "textbox_border": [
+      "#6ab882",
+      "#2f5e3d"
+    ],
+    "textbox_text": [
+      "#0d1a11",
+      "#e6f5e9"
+    ],
+    "scrollbar": [
+      "#7aa887",
+      "#3b6949"
+    ],
+    "scrollbar_hover": [
+      "#598a67",
+      "#487d58"
+    ],
+    "switch_off": [
+      "#b2c7b7",
+      "#2f5e3d"
+    ],
+    "switch_knob": [
+      "#ffffff",
+      "#ffffff"
+    ],
+    "slider_track": [
+      "#b2c7b7",
+      "#2f5e3d"
+    ],
+    "dropdown_bg": [
+      "#f4f8f5",
+      "#121d15"
+    ],
+    "dropdown_hover": [
+      "#e2ece5",
+      "#1a2c1e"
+    ],
+    "dropdown_text": [
+      "#0d1a11",
+      "#e6f5e9"
+    ],
+    "segmented_bg": [
+      "#b5cca0",
+      "#213825"
+    ],
+    "segmented_hover": [
+      "#a3bcae",
+      "#2c4a34"
+    ],
+    "cmd_panel_bg": [
+      "#e2ece5",
+      "#16241a"
+    ],
+    "cmd_box_bg": [
+      "#f4f8f5",
+      "#070d09"
+    ],
+    "cmd_line": [
+      "#6ab882",
+      "#3b6949"
+    ],
+    "tile_border": [
+      "#7aa887",
+      "#3b6949"
+    ],
+    "tile_select": [
+      "#234d30",
+      "#d98c52"
+    ],
+    "tile_text_light": [
+      "#ffffff",
+      "#ffffff"
+    ],
+    "tile_text_dark": [
+      "#0d1a11",
+      "#0d1a11"
+    ],
+    "caption": [
+      "#3b6949",
+      "#8ab897"
+    ],
+    "drag_source": [
+      "#234d30",
+      "#6ab882"
+    ],
+    "drag_target": [
+      "#234d30",
+      "#d98c52"
+    ],
+    "tooltip_bg": [
+      "#0d1a11",
+      "#e6f5e9"
+    ],
+    "tooltip_text": [
+      "#ffffff",
+      "#0d1a11"
+    ]
+  },
+  "shapes": {
+    "button_radius": 8,
+    "frame_radius": 12,
+    "entry_radius": 6,
+    "tile_radius": 10,
+    "sidebar_radius": 8,
+    "texture_inset": 0
+  },
+  "fonts": {
+    "family": "Segoe UI",
+    "size": 13
+  },
+  "tiles": {
+    "palette": [
+      "#234d30",
+      "#2f5e3d",
+      "#6ab882",
+      "#b85d26",
+      "#d98c52",
+      "#3b6949",
+      "#96491c",
+      "#16241a"
+    ]
+  }
+}

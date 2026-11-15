@@ -1,0 +1,242 @@
+{
+  "name": "Cyber Neon",
+  "colors": {
+    "button": [
+      "#ffffff",
+      "#161622"
+    ],
+    "button_hover": [
+      "#f1f5f9",
+      "#212133"
+    ],
+    "button_text": [
+      "#090d16",
+      "#e2e8f0"
+    ],
+    "button_border": [
+      "#cbd5e1",
+      "#3b3b54"
+    ],
+    "active": [
+      "#0284c7",
+      "#38bdf8"
+    ],
+    "active_hover": [
+      "#0369a1",
+      "#7dd3fc"
+    ],
+    "select_border": [
+      "#0284c7",
+      "#f43f5e"
+    ],
+    "ghost_text": [
+      "#1e293b",
+      "#cbd5e1"
+    ],
+    "ghost_hover": [
+      "#e2e8f0",
+      "#2a2a3d"
+    ],
+    "danger": [
+      "#ef4444",
+      "#f43f5e"
+    ],
+    "danger_hover": [
+      "#dc2626",
+      "#fb7185"
+    ],
+    "window_bg": [
+      "#f8fafc",
+      "#0b0b12"
+    ],
+    "panel_bg": [
+      "#edf2f7",
+      "#12121c"
+    ],
+    "panel_top_bg": [
+      "#e2e8f0",
+      "#181824"
+    ],
+    "card_bg": [
+      "#ffffff",
+      "#13131d"
+    ],
+    "card_hover": [
+      "#f1f5f9",
+      "#222233"
+    ],
+    "nav_selected": [
+      "#bae6fd",
+      "#222233"
+    ],
+    "select_bg": [
+      "#38bdf8",
+      "#252538"
+    ],
+    "help_badge": [
+      "#0284c7",
+      "#38bdf8"
+    ],
+    "help_text": [
+      "#ffffff",
+      "#0b0b12"
+    ],
+    "text": [
+      "#090d16",
+      "#e2e8f0"
+    ],
+    "text_dim": [
+      "#475569",
+      "#94a3b8"
+    ],
+    "accent": [
+      "#0284c7",
+      "#38bdf8"
+    ],
+    "error": [
+      "#ef4444",
+      "#f43f5e"
+    ],
+    "entry_bg": [
+      "#ffffff",
+      "#161622"
+    ],
+    "entry_border": [
+      "#94a3b8",
+      "#3b3b54"
+    ],
+    "entry_text": [
+      "#090d16",
+      "#e2e8f0"
+    ],
+    "entry_placeholder": [
+      "#64748b",
+      "#64748b"
+    ],
+    "textbox_bg": [
+      "#ffffff",
+      "#161622"
+    ],
+    "textbox_border": [
+      "#94a3b8",
+      "#3b3b54"
+    ],
+    "textbox_text": [
+      "#090d16",
+      "#e2e8f0"
+    ],
+    "scrollbar": [
+      "#94a3b8",
+      "#3b3b54"
+    ],
+    "scrollbar_hover": [
+      "#64748b",
+      "#4c4c6b"
+    ],
+    "switch_off": [
+      "#cbd5e1",
+      "#3b3b54"
+    ],
+    "switch_knob": [
+      "#ffffff",
+      "#e2e8f0"
+    ],
+    "slider_track": [
+      "#cbd5e1",
+      "#3b3b54"
+    ],
+    "dropdown_bg": [
+      "#ffffff",
+      "#14141e"
+    ],
+    "dropdown_hover": [
+      "#f1f5f9",
+      "#222233"
+    ],
+    "dropdown_text": [
+      "#090d16",
+      "#e2e8f0"
+    ],
+    "segmented_bg": [
+      "#cbd5e1",
+      "#12121c"
+    ],
+    "segmented_hover": [
+      "#94a3b8",
+      "#222233"
+    ],
+    "cmd_panel_bg": [
+      "#edf2f7",
+      "#12121c"
+    ],
+    "cmd_box_bg": [
+      "#ffffff",
+      "#0b0b12"
+    ],
+    "cmd_line": [
+      "#94a3b8",
+      "#2a2a3d"
+    ],
+    "tile_border": [
+      "#94a3b8",
+      "#3b3b54"
+    ],
+    "tile_select": [
+      "#0284c7",
+      "#38bdf8"
+    ],
+    "tile_text_light": [
+      "#ffffff",
+      "#ffffff"
+    ],
+    "tile_text_dark": [
+      "#090d16",
+      "#090d16"
+    ],
+    "caption": [
+      "#334155",
+      "#b8c2cc"
+    ],
+    "drag_source": [
+      "#d97706",
+      "#fbbf24"
+    ],
+    "drag_target": [
+      "#0284c7",
+      "#38bdf8"
+    ],
+    "tooltip_bg": [
+      "#090d16",
+      "#222233"
+    ],
+    "tooltip_text": [
+      "#ffffff",
+      "#e2e8f0"
+    ]
+  },
+  "shapes": {
+    "button_radius": 6,
+    "frame_radius": 8,
+    "entry_radius": 6,
+    "tile_radius": 8,
+    "sidebar_radius": 6,
+    "texture_inset": 2
+  },
+  "fonts": {
+    "family": "Segoe UI",
+    "size": 13,
+    "icon_family": "Segoe UI Symbol"
+  },
+  "tiles": {
+    "palette": [
+      "#0284c7",
+      "#3b82f6",
+      "#6366f1",
+      "#8b5cf6",
+      "#ec4899",
+      "#f43f5e",
+      "#10b981",
+      "#f59e0b"
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+Aura NOX Launcher is free software. Please read these terms before using it. If you do not agree with them, do not use the program.
+
+1. Free of charge
+The program is free. It must not be sold, rented out or distributed for a fee. Nobody may ask for money or donations for it or for its modified versions in any form: inside the program, on a download page, in a description or in accompanying materials.
+
+2. Distribution
+Anyone may freely copy the program and pass it on to other people, provided this is free of charge and together with these terms.
+
+3. Modifications
+The program may be modified and modified versions may be distributed, but only free of charge and under these same terms. A modified version must not be presented as the original or as the author's work, and it must clearly state that it has been modified.
+
+4. What counts as the original
+The original is only the version received from the author (Dmitriy336-pixel, official GitHub repository). The author did not create, check or take responsibility for versions from other sources, or for any code that other people added to the program, including malicious code (viruses, spyware and other dangerous programs). If you received the program from anyone other than the author, you use it at your own risk. Download the program only from the official source.
+
+5. No warranty
+The program is provided "as is", without warranty of any kind. The author is not liable for damage, data loss or any other consequences of using it.
+
+6. Your actions
+The launcher starts programs and runs commands that you set up yourself: tiles and your own commands, including Windows commands. You are responsible for what you run.
+
+7. Your data
+Tiles, settings and notes are stored only on your computer. The program does not send anything to the internet and does not collect anything. Commands that open websites (for example, search) open them in your browser at your request.
+
+8. Third-party components
+The program uses Python, CustomTkinter and Pillow, which have their own licenses. Themes, sounds and icons that you add remain the property of their authors.
+
+Copyright (c) 2026 Dmitriy336-pixel

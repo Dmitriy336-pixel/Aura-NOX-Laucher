@@ -1,0 +1,45 @@
+{
+  "name": "Моя тема",
+  "colors": {
+    "window_bg": [
+      "#f8f9fa",
+      "#16181d"
+    ],
+    "panel_bg": [
+      "#ffffff",
+      "#1f2229"
+    ],
+    "panel_top_bg": [
+      "#e9ecef",
+      "#282c35"
+    ],
+    "text": [
+      "#212529",
+      "#e9ecef"
+    ],
+    "button": [
+      "#495057",
+      "#343a40"
+    ],
+    "button_hover": [
+      "#343a40",
+      "#495057"
+    ],
+    "button_text": [
+      "#ffffff",
+      "#f8f9fa"
+    ],
+    "active": [
+      "#4682b4",
+      "#64b5f6"
+    ],
+    "active_hover": [
+      "#36648b",
+      "#90caf9"
+    ],
+    "select_border": [
+      "#495057",
+      "#90caf9"
+    ]
+  }
+}

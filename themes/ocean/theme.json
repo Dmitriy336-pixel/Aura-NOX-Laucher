@@ -1,0 +1,208 @@
+{
+  "name": "Ocean",
+  "colors": {
+    "button": [
+      "#2a7f8f",
+      "#1d6f80"
+    ],
+    "button_hover": [
+      "#216674",
+      "#165a69"
+    ],
+    "button_text": [
+      "#ffffff",
+      "#E6F4F6"
+    ],
+    "active": [
+      "#e07b39",
+      "#e8894a"
+    ],
+    "active_hover": [
+      "#c4672a",
+      "#cf7a3d"
+    ],
+    "select_border": [
+      "#0b2a33",
+      "#9fe3ee"
+    ],
+    "ghost_text": [
+      "#10343c",
+      "#d6eef2"
+    ],
+    "ghost_hover": [
+      "#bcd8df",
+      "#24505e"
+    ],
+    "danger": [
+      "#a8432f",
+      "#8f3a2a"
+    ],
+    "danger_hover": [
+      "#c4543d",
+      "#b04a37"
+    ],
+    "window_bg": [
+      "#e8f3f5",
+      "#0f1f24"
+    ],
+    "panel_bg": [
+      "#d3e8ec",
+      "#16303a"
+    ],
+    "panel_top_bg": [
+      "#c2dde3",
+      "#1d3d49"
+    ],
+    "card_bg": [
+      "#cfe4e9",
+      "#1b3a45"
+    ],
+    "card_hover": [
+      "#bcd8df",
+      "#24505e"
+    ],
+    "nav_selected": [
+      "#b5d6de",
+      "#27525f"
+    ],
+    "select_bg": [
+      "#bfe3ea",
+      "#1f4a57"
+    ],
+    "text": [
+      "#10343c",
+      "#d6eef2"
+    ],
+    "text_dim": [
+      "#3f6068",
+      "#8fb4bd"
+    ],
+    "accent": [
+      "#0d6a7c",
+      "#5fd0e6"
+    ],
+    "error": [
+      "#b3382c",
+      "#ff8a7a"
+    ],
+    "entry_bg": [
+      "#f4fafb",
+      "#12282f"
+    ],
+    "entry_border": [
+      "#8fb7c0",
+      "#2d5560"
+    ],
+    "entry_text": [
+      "#10343c",
+      "#d6eef2"
+    ],
+    "entry_placeholder": [
+      "#6e8f97",
+      "#6f98a3"
+    ],
+    "textbox_bg": [
+      "#f4fafb",
+      "#12282f"
+    ],
+    "textbox_border": [
+      "#8fb7c0",
+      "#2d5560"
+    ],
+    "textbox_text": [
+      "#10343c",
+      "#d6eef2"
+    ],
+    "scrollbar": [
+      "#7fa9b3",
+      "#3f6f7c"
+    ],
+    "scrollbar_hover": [
+      "#5f8f9b",
+      "#5a8f9d"
+    ],
+    "switch_off": [
+      "#9fbfc7",
+      "#35535c"
+    ],
+    "switch_knob": [
+      "#ffffff",
+      "#e6f4f6"
+    ],
+    "slider_track": [
+      "#9fbfc7",
+      "#35535c"
+    ],
+    "dropdown_bg": [
+      "#e3f1f3",
+      "#16333d"
+    ],
+    "dropdown_hover": [
+      "#c6e0e5",
+      "#24505e"
+    ],
+    "dropdown_text": [
+      "#10343c",
+      "#d6eef2"
+    ],
+    "segmented_bg": [
+      "#9fbfc7",
+      "#2a4a54"
+    ],
+    "segmented_hover": [
+      "#8db4be",
+      "#3a6573"
+    ],
+    "cmd_panel_bg": [
+      "#d8ebef",
+      "#14303a"
+    ],
+    "cmd_box_bg": [
+      "#eef7f8",
+      "#0c1a1f"
+    ],
+    "cmd_line": [
+      "#9ec3cc",
+      "#2b5360"
+    ],
+    "tile_border": [
+      "#4f8794",
+      "#5f9aa8"
+    ],
+    "tile_select": [
+      "#0b2a33",
+      "#bfeef6"
+    ],
+    "caption": [
+      "#2f5560",
+      "#9fc6cf"
+    ],
+    "drag_target": [
+      "#0b2a33",
+      "#bfeef6"
+    ]
+  },
+  "shapes": {
+    "button_radius": 12,
+    "frame_radius": 12,
+    "entry_radius": 10,
+    "tile_radius": 14,
+    "sidebar_radius": 8
+  },
+  "fonts": {
+    "family": "Segoe UI",
+    "size": 13
+  },
+  "tiles": {
+    "palette": [
+      "#1b6b7a",
+      "#2a7f8f",
+      "#3a9aa8",
+      "#c9692c",
+      "#386fa4",
+      "#59a5d8",
+      "#2e8b6e",
+      "#7a5ea8"
+    ]
+  }
+}
