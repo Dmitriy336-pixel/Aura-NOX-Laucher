@@ -1,324 +1,239 @@
-"""Темы оформления: цвета, скругления, шрифты и картинки лежат в папках внутри «themes» рядом с программой.
-Тема это папка themes/<имя>/ с файлом theme.json и необязательными картинками (формат: themes/README.txt).
+# theme.py
+"""
+Темы оформления для PySide6.
+Каждый цветовой ключ — пара [светлая, тёмная].
+apply(name, mode, app) генерирует QSS и применяет его к QApplication.
 
-Весь список того, что можно менять, находится в таблицах ниже (COLORS, SHAPES, FONT_KEYS): ключ, значение по умолчанию,
-описание и то, что именно он красит. Остальной код берёт значения из модульных переменных (theme.BUTTON, theme.DIM и так далее).
-Тема включается ещё при первом импорте этого модуля, то есть до создания окон и до того, как другие модули прочитают свои константы.
-Цвета пары (светлая тема, тёмная тема), поэтому переключатель «светлая / тёмная / как в Windows» работает с любой темой."""
+Использование в коде:
+    import theme
+    theme.color("button")        -> "#1f538d"  (строка для текущего режима)
+    theme.shape("button_radius") -> 6
+    theme.CURRENT_TILE_COLORS    -> список "#rrggbb"
+"""
+
 import json
 import os
 import re
-import shutil
-import sys
 
-import customtkinter as ctk
-from PIL import Image, ImageDraw
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import QApplication
 
 from config import BASE_DIR, SETTINGS_FILE
-from config import COLORS as DEFAULT_TILE_COLORS
+
+# ---------------------------------------------------------------------------
+# Директории
+# ---------------------------------------------------------------------------
 
 THEMES_DIR = os.path.join(BASE_DIR, "themes")
 DEFAULT_NAME = "default"
 HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 IMAGE_EXTS = (".png", ".webp")
-MAX_THEME_BYTES = 20 * 1024 * 1024  # папка больше этого не считается темой (защита от случайного выбора диска)
+DEFAULT_ICON_FONT = "Segoe UI Symbol"  # значки ✎ ⚡ ⚙ есть в этом шрифте: размер не зависит от шрифта темы
 
+# ---------------------------------------------------------------------------
+# Дефолтные значения
+# ---------------------------------------------------------------------------
 
-def g(n):
-    """Серый CustomTkinter grayN как #rrggbb (так цвета годятся и для картинок, и для виджетов)."""
-    v = round(n * 2.55)
-    return f"#{v:02x}{v:02x}{v:02x}"
-
-
-def tok(default, var, desc, ctk_targets=(), always=False):
-    """Описание цветового ключа: значение по умолчанию, переменная модуля, подпись и куда красит в CustomTkinter.
-    always: значение подставляется в стандартную тему всегда, иначе только когда тема его задаёт."""
-    return {"default": default, "var": var, "desc": desc, "ctk": list(ctk_targets), "always": always}
-
-
-# Цвета: ключ -> описание. Каждый цвет это пара (светлая тема, тёмная тема).
 COLORS = {
-    # --- кнопки ---
-    "button": tok(("#34506b", "#1f538d"), "BUTTON", "обычная кнопка (а также ползунки, переключатели, выбор вариантов)",
-                  [("CTkButton", "fg_color"), ("CTkSegmentedButton", "selected_color"), ("CTkSwitch", "progress_color"),
-                   ("CTkSlider", "progress_color"), ("CTkSlider", "button_color"), ("CTkOptionMenu", "fg_color")], True),
-    "button_hover": tok(("#283f55", "#14375e"), "BUTTON_HOVER", "кнопка под курсором",
-                        [("CTkButton", "hover_color"), ("CTkSegmentedButton", "selected_hover_color"),
-                         ("CTkSwitch", "button_hover_color"), ("CTkSlider", "button_hover_color"),
-                         ("CTkOptionMenu", "button_color"), ("CTkOptionMenu", "button_hover_color")], True),
-    "button_text": tok(("#ffffff", "#DCE4EE"), "BUTTON_TEXT", "текст на обычной кнопке", [("CTkButton", "text_color")], True),
-    "button_border": tok(("#3E454A", "#949A9F"), "BUTTON_BORDER", "рамка кнопок с обводкой", [("CTkButton", "border_color")]),
-    "active": tok(("#a8660a", "#27ae60"), "ACTIVE", "включённая функция: подсвеченная кнопка правой панели"),
-    "active_hover": tok(("#8a5408", "#219653"), "ACTIVE_HOVER", "включённая кнопка под курсором"),
-    "select_border": tok(("#4b9574", "#ffffff"), "SELECT_BORDER", "рамка выбранной кнопки правой панели"),
-    "ghost_text": tok((g(10), g(90)), "GHOST_TEXT", "текст на прозрачных кнопках (список разделов, «Сброс», «Отмена»)"),
-    "ghost_hover": tok((g(80), g(28)), "GHOST_HOVER", "прозрачная кнопка под курсором"),
-    "danger": tok(("#7b2d26", "#7b2d26"), "DANGER", "кнопки «Удалить» и «Сбросить всё»"),
-    "danger_hover": tok(("#a03a30", "#a03a30"), "DANGER_HOVER", "кнопка «Удалить» под курсором"),
-    # --- окна и панели ---
-    "window_bg": tok((g(92), g(14)), "WINDOW_BG", "фон окон", [("CTk", "fg_color"), ("CTkToplevel", "fg_color")]),
-    "panel_bg": tok((g(86), g(17)), "PANEL_BG", "фон панелей и рамок", [("CTkFrame", "fg_color")]),
-    "panel_top_bg": tok((g(81), g(20)), "PANEL_TOP_BG", "фон панелей внутри панелей", [("CTkFrame", "top_fg_color")]),
-    "card_bg": tok((g(86), g(21)), "CARD_BG", "строки списков и карточки тем"),
-    "card_hover": tok((g(78), g(29)), "CARD_HOVER", "строка или карточка под курсором"),
-    "nav_selected": tok((g(75), g(25)), "NAV_SELECTED", "выбранный раздел в списке настроек слева"),
-    "select_bg": tok(("#cfe3f6", "#2b3f55"), "SELECT_BG", "выбранная строка: заметка в списке, подсказка в командной строке"),
-    "help_badge": tok(("#4682B4", "#4682B4"), "HELP_BADGE", "кружок «?» с подсказкой"),
-    "help_text": tok(("#ffffff", "#ffffff"), "HELP_TEXT", "знак в кружке «?»"),
-    # --- текст ---
-    "text": tok((g(10), "#DCE4EE"), "TEXT", "обычный текст",
-                [("CTkLabel", "text_color"), ("CTkCheckBox", "text_color"), ("CTkSwitch", "text_color"),
-                 ("CTkRadioButton", "text_color")]),
-    "text_dim": tok((g(30), g(62)), "DIM", "приглушённый текст: описания, подписи, подсказки"),
-    "accent": tok(("#14507f", "#6aa9e0"), "ACCENT", "выделенный текст: названия команд, быстрые клавиши в списках"),
-    "error": tok(("#c0392b", "#e5766b"), "ERROR", "сообщения об ошибках"),
-    # --- поля ввода ---
-    "entry_bg": tok(("#F9F9FA", "#343638"), "ENTRY_BG", "фон полей ввода", [("CTkEntry", "fg_color")]),
-    "entry_border": tok(("#979DA2", "#565B5E"), "ENTRY_BORDER", "рамка полей ввода", [("CTkEntry", "border_color")]),
-    "entry_text": tok((g(10), "#DCE4EE"), "ENTRY_TEXT", "текст в полях ввода", [("CTkEntry", "text_color")]),
-    "entry_placeholder": tok((g(52), g(62)), "ENTRY_PLACEHOLDER", "серая подсказка в пустом поле",
-                             [("CTkEntry", "placeholder_text_color")]),
-    "textbox_bg": tok(("#F9F9FA", "#343638"), "TEXTBOX_BG", "фон большого текстового поля (редактор заметок)",
-                      [("CTkTextbox", "fg_color")]),
-    "textbox_border": tok(("#979DA2", "#565B5E"), "TEXTBOX_BORDER", "рамка большого текстового поля",
-                          [("CTkTextbox", "border_color")]),
-    "textbox_text": tok((g(10), "#DCE4EE"), "TEXTBOX_TEXT", "текст заметки", [("CTkTextbox", "text_color")]),
-    # --- элементы управления ---
-    "scrollbar": tok((g(55), g(41)), "SCROLLBAR", "ползунок полосы прокрутки",
-                     [("CTkScrollbar", "button_color"), ("CTkTextbox", "scrollbar_button_color")]),
-    "scrollbar_hover": tok((g(40), g(53)), "SCROLLBAR_HOVER", "ползунок полосы прокрутки под курсором",
-                           [("CTkScrollbar", "button_hover_color"), ("CTkTextbox", "scrollbar_button_hover_color")]),
-    "switch_off": tok(("#939BA2", "#4A4D50"), "SWITCH_OFF", "выключенный переключатель", [("CTkSwitch", "fg_color")]),
-    "switch_knob": tok((g(36), "#D5D9DE"), "SWITCH_KNOB", "кружок на переключателе", [("CTkSwitch", "button_color")]),
-    "slider_track": tok(("#939BA2", "#4A4D50"), "SLIDER_TRACK", "дорожка ползунка", [("CTkSlider", "fg_color")]),
-    "dropdown_bg": tok((g(90), g(20)), "DROPDOWN_BG", "выпадающий список: фон", [("DropdownMenu", "fg_color")]),
-    "dropdown_hover": tok((g(75), g(28)), "DROPDOWN_HOVER", "выпадающий список: строка под курсором",
-                          [("DropdownMenu", "hover_color")]),
-    "dropdown_text": tok((g(10), g(90)), "DROPDOWN_TEXT", "выпадающий список: текст", [("DropdownMenu", "text_color")]),
-    "segmented_bg": tok(("#979DA2", g(29)), "SEGMENTED_BG", "переключатель из нескольких кнопок: фон и невыбранные",
-                        [("CTkSegmentedButton", "fg_color"), ("CTkSegmentedButton", "unselected_color")]),
-    "segmented_hover": tok((g(70), g(41)), "SEGMENTED_HOVER", "невыбранная кнопка под курсором",
-                           [("CTkSegmentedButton", "unselected_hover_color")]),
-    # --- командная строка ---
-    "cmd_panel_bg": tok((g(88), g(17)), "CMD_PANEL", "командная строка: панель с подсказками"),
-    "cmd_box_bg": tok((g(95), g(12)), "CMD_BOX", "командная строка: фон окна"),
-    "cmd_line": tok((g(70), g(32)), "CMD_LINE", "командная строка: рамка и разделители"),
-    # --- плитки ---
-    "tile_border": tok(("#777777", "#888888"), "TILE_BORDER", "рамка плитки «＋»"),
-    "tile_select": tok(("#1a1a1a", "#ffffff"), "TILE_SELECT", "рамка выбранной плитки"),
-    "tile_text_light": tok(("#DCE4EE", "#DCE4EE"), "TILE_TEXT_LIGHT", "текст на тёмных плитках"),
-    "tile_text_dark": tok(("#1a1a1a", "#1a1a1a"), "TILE_TEXT_DARK", "текст на светлых плитках"),
-    "caption": tok((g(30), g(75)), "CAPTION", "подпись под плиткой"),
-    "drag_source": tok(("#f1c40f", "#f1c40f"), "DRAG_SOURCE", "рамка плитки, которую тащат"),
-    "drag_target": tok(("#1a1a1a", "#ffffff"), "DRAG_TARGET", "рамка плитки, на чьё место встанет перетаскиваемая"),
-    # --- подсказка при наведении ---
-    "tooltip_bg": tok(("#4d26fa", "#4d26fa"), "TOOLTIP_BG", "всплывающая подсказка: фон"),
-    "tooltip_text": tok(("#ffffff", "#ffffff"), "TOOLTIP_TEXT", "всплывающая подсказка: текст"),
+    # кнопки
+    "button":            ("#34506b", "#1f538d"),
+    "button_hover":      ("#283f55", "#14375e"),
+    "button_text":       ("#ffffff", "#DCE4EE"),
+    "button_border":     ("#3E454A", "#949A9F"),
+    "active":            ("#a8660a", "#27ae60"),
+    "active_hover":      ("#8a5408", "#219653"),
+    "select_border":     ("#4b9574", "#ffffff"),
+    "ghost_text":        ("#1a1a1a", "#e5e5e5"),
+    "ghost_hover":       ("#cccccc", "#474747"),
+    "danger":            ("#7b2d26", "#7b2d26"),
+    "danger_hover":      ("#a03a30", "#a03a30"),
+    # окна и панели
+    "window_bg":         ("#ebebeb", "#242424"),
+    "panel_bg":          ("#dbdbdb", "#2b2b2b"),
+    "panel_top_bg":      ("#cfcfcf", "#333333"),
+    "card_bg":           ("#dbdbdb", "#363636"),
+    "card_hover":        ("#c7c7c7", "#4a4a4a"),
+    "nav_selected":      ("#bfbfbf", "#404040"),
+    "select_bg":         ("#cfe3f6", "#2b3f55"),
+    "help_badge":        ("#4682B4", "#4682B4"),
+    "help_text":         ("#ffffff", "#ffffff"),
+    # текст
+    "text":              ("#1a1a1a", "#DCE4EE"),
+    "text_dim":          ("#4c4c4c", "#9e9e9e"),
+    "accent":            ("#14507f", "#6aa9e0"),
+    "error":             ("#c0392b", "#e5766b"),
+    # поля ввода
+    "entry_bg":          ("#F9F9FA", "#343638"),
+    "entry_border":      ("#979DA2", "#565B5E"),
+    "entry_text":        ("#1a1a1a", "#DCE4EE"),
+    "entry_placeholder": ("#858585", "#9e9e9e"),
+    "textbox_bg":        ("#F9F9FA", "#343638"),
+    "textbox_border":    ("#979DA2", "#565B5E"),
+    "textbox_text":      ("#1a1a1a", "#DCE4EE"),
+    # элементы управления
+    "scrollbar":         ("#8c8c8c", "#696969"),
+    "scrollbar_hover":   ("#666666", "#878787"),
+    "switch_off":        ("#939BA2", "#4A4D50"),
+    "slider_track":      ("#939BA2", "#4A4D50"),
+    "dropdown_bg":       ("#e5e5e5", "#333333"),
+    "dropdown_hover":    ("#bfbfbf", "#474747"),
+    "dropdown_text":     ("#1a1a1a", "#e5e5e5"),
+    "segmented_bg":      ("#979DA2", "#4a4a4a"),
+    "segmented_hover":   ("#b2b2b2", "#696969"),
+    # командная строка
+    "cmd_panel_bg":      ("#e0e0e0", "#2b2b2b"),
+    "cmd_box_bg":        ("#f2f2f2", "#1f1f1f"),
+    "cmd_line":          ("#b2b2b2", "#525252"),
+    # плитки
+    "tile_border":       ("#777777", "#888888"),
+    "tile_select":       ("#1a1a1a", "#ffffff"),
+    "tile_text_light":   ("#DCE4EE", "#DCE4EE"),
+    "tile_text_dark":    ("#1a1a1a", "#1a1a1a"),
+    "caption":           ("#4c4c4c", "#bfbfbf"),
+    "drag_source":       ("#f1c40f", "#f1c40f"),
+    "drag_target":       ("#1a1a1a", "#ffffff"),
+    # подсказка
+    "tooltip_bg":        ("#4d26fa", "#4d26fa"),
+    "tooltip_text":      ("#ffffff", "#ffffff"),
 }
 
-# Скругления (число от 0 до 40): ключ -> (по умолчанию, переменная, описание, куда в CustomTkinter)
 SHAPES = {
-    "button_radius": (6, "BUTTON_RADIUS", "скругление кнопок", [("CTkButton", "corner_radius")]),
-    "frame_radius": (6, "FRAME_RADIUS", "скругление панелей", [("CTkFrame", "corner_radius")]),
-    "entry_radius": (6, "ENTRY_RADIUS", "скругление полей ввода и текстовых полей",
-                     [("CTkEntry", "corner_radius"), ("CTkTextbox", "corner_radius")]),
-    "tile_radius": (6, "TILE_RADIUS", "скругление плиток", []),
-    "sidebar_radius": (6, "SIDEBAR_RADIUS", "скругление кнопок правой панели", []),
-    "texture_inset": (0, "TEXTURE_INSET", "отступ текстуры кнопок панели от края, px (если края картинки обрезаются, поставь 2)", []),
+    "button_radius":  6,
+    "frame_radius":   6,
+    "entry_radius":   6,
+    "tile_radius":    6,
+    "sidebar_radius": 6,
+    "texture_inset":  0,
 }
-DEFAULT_ICON_FONT = "Segoe UI Symbol"  # значки ✎ ⚡ ⚙ есть в этом шрифте: так их размер не зависит от шрифта темы
-FONT_KEYS = {"family": "название шрифта, например Segoe UI", "size": "основной размер текста, 8..24",
-             "icon_family": "шрифт значков на кнопках правой панели (по умолчанию Segoe UI Symbol)"}
-THEME_SECTIONS = ("colors", "shapes", "fonts", "tiles")
 
-_current = {"name": DEFAULT_NAME, "dir": None}
-_images = {}
-_previews = {}
-_orig = {}  # исходные значения стандартной темы CustomTkinter: чтобы смена темы не накапливала правки
+TILE_COLORS = [
+    "#2d6a4f", "#1d4e89", "#7b2d26",
+    "#5a3e85", "#8a5a00", "#006466",
+]
 
-# Переменные модуля (BUTTON, DIM, TILE_COLORS...) заполняются в apply()
-TILE_COLORS = list(DEFAULT_TILE_COLORS)
-FONT_FAMILY = None
+# ---------------------------------------------------------------------------
+# Внутреннее состояние
+# ---------------------------------------------------------------------------
+
+_current = {"name": DEFAULT_NAME, "mode": "dark", "dir": None}
+_colors: dict[str, str] = {}   # ключ → "#rrggbb" для текущего режима
+_shapes: dict[str, int] = {}
+
+CURRENT_TILE_COLORS: list[str] = list(TILE_COLORS)
+_pairs: dict = {}              # ключ → (светлый, тёмный): картинки кнопок рисуются сразу для обеих тем
+_images: dict = {}
+FONT_FAMILY = None             # шрифт и размер из theme.json (None = стандартные)
 FONT_SIZE = None
 ICON_FONT = DEFAULT_ICON_FONT
-for _t in COLORS.values():
-    globals()[_t["var"]] = _t["default"]
-for _k, (_d, _v, _x, _y) in SHAPES.items():
-    globals()[_v] = _d
+
+# ---------------------------------------------------------------------------
+# Вспомогательные функции
+# ---------------------------------------------------------------------------
+
+def _pick(pair, mode: str) -> str:
+    """Из пары (светлый, тёмный) выбирает нужный цвет."""
+    if isinstance(pair, str):
+        return pair
+    return pair[0] if mode == "light" else pair[1]
 
 
-# ---------------------------------------------------------------- чтение тем
-def _theme_json(folder):
-    """Содержимое theme.json или None, если файла нет или он битый."""
+def _effective_mode(mode: str) -> str:
+    """
+    Если mode == "system" — определяет тему через QPalette.
+    Возвращает "light" или "dark".
+    """
+    if mode != "system":
+        return mode
+    qapp = QApplication.instance()
+    if qapp:
+        from PySide6.QtGui import QPalette
+        bg = qapp.palette().color(QPalette.ColorRole.Window)
+        return "dark" if bg.lightness() < 128 else "light"
+    return "dark"
+
+
+def _pair(value):
+    """Значение из theme.json → пара или None."""
+    if isinstance(value, str) and HEX.match(value):
+        return (value, value)
+    if (isinstance(value, (list, tuple)) and len(value) == 2
+            and all(isinstance(v, str) and HEX.match(v) for v in value)):
+        return tuple(value)
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Загрузка темы из файла
+# ---------------------------------------------------------------------------
+
+def _theme_json(folder: str):
     try:
-        with open(os.path.join(THEMES_DIR, folder, "theme.json"), encoding="utf-8") as f:
+        with open(os.path.join(THEMES_DIR, folder, "theme.json"),
+                  encoding="utf-8") as f:
             data = json.load(f)
         return data if isinstance(data, dict) else None
     except (OSError, ValueError):
         return None
 
 
-def list_themes():
-    """[(папка, название)]: сначала стандартная, дальше найденные в themes по алфавиту папок."""
-    found = [(DEFAULT_NAME, "Стандартная")]
-    try:
-        folders = sorted(os.listdir(THEMES_DIR))
-    except OSError:
-        return found
-    for folder in folders:
-        if folder == DEFAULT_NAME or folder.startswith(("_", ".")):  # _template и скрытые папки в список не попадают
-            continue
-        data = _theme_json(folder)
-        if data is not None:
-            title = data.get("name")
-            found.append((folder, title if isinstance(title, str) and title.strip() else folder))
-    return found
+def load(name: str) -> tuple[dict, dict, list]:
+    """
+    Возвращает (colors_spec, shapes_spec, tiles_palette).
+    colors_spec: ключ → пара или строка (ещё не выбран режим)
+    shapes_spec: ключ → int
+    tiles_palette: список строк "#rrggbb"
+    """
+    colors_spec = dict(COLORS)
+    shapes_spec = dict(SHAPES)
+    tiles = list(TILE_COLORS)
 
-
-def _pair(value):
-    """Цвет из theme.json -> пара (светлая, тёмная) или None, если значение неверное."""
-    if isinstance(value, str) and HEX.match(value):
-        return (value, value)
-    if isinstance(value, (list, tuple)) and len(value) == 2 and all(isinstance(v, str) and HEX.match(v) for v in value):
-        return (value[0], value[1])
-    return None
-
-
-def _int(value, low, high):
-    return value if isinstance(value, int) and not isinstance(value, bool) and low <= value <= high else None
-
-
-def load(name):
-    """Тема как словарь {"set": цвета, заданные темой, "colors": все цвета (заданные и стандартные),
-    "shapes": скругления, "fonts": шрифты, "tiles": палитра плиток}. Возвращает (словарь, папка темы или None).
-    Неверные значения и неизвестные ключи пропускаются, а не ломают запуск."""
-    spec = {"set": {}, "colors": {k: t["default"] for k, t in COLORS.items()},
-            "shapes": {k: v[0] for k, v in SHAPES.items()}, "fonts": {}, "tiles": list(DEFAULT_TILE_COLORS)}
     data = None if name == DEFAULT_NAME else _theme_json(name)
     if data is None:
-        return spec, None  # стандартная, либо тему удалили или файл битый
-    colors = data.get("colors")
-    if isinstance(colors, dict):
+        return colors_spec, shapes_spec, tiles
+
+    raw_colors = data.get("colors", {})
+    if isinstance(raw_colors, dict):
         for key in COLORS:
-            pair = _pair(colors.get(key))
+            pair = _pair(raw_colors.get(key))
             if pair:
-                spec["set"][key] = pair
-                spec["colors"][key] = pair
-    shapes = data.get("shapes")
-    if isinstance(shapes, dict):
+                colors_spec[key] = pair
+
+    raw_shapes = data.get("shapes", {})
+    if isinstance(raw_shapes, dict):
         for key in SHAPES:
-            value = _int(shapes.get(key), 0, 40)
-            if value is not None:
-                spec["shapes"][key] = value
-    fonts = data.get("fonts")
-    if isinstance(fonts, dict):
-        for key in ("family", "icon_family"):
-            name_value = fonts.get(key)
-            if isinstance(name_value, str) and 0 < len(name_value.strip()) <= 60 and name_value.isprintable():
-                spec["fonts"][key] = name_value.strip()
-        size = _int(fonts.get("size"), 8, 24)
-        if size is not None:
-            spec["fonts"]["size"] = size
-    tiles = data.get("tiles")
-    if isinstance(tiles, dict) and isinstance(tiles.get("palette"), list):
-        palette = [c for c in tiles["palette"] if isinstance(c, str) and HEX.match(c)][:24]
+            val = raw_shapes.get(key)
+            if isinstance(val, int) and 0 <= val <= 40:
+                shapes_spec[key] = val
+
+    raw_tiles = data.get("tiles", {})
+    if isinstance(raw_tiles, dict):
+        palette = [c for c in raw_tiles.get("palette", [])
+                   if isinstance(c, str) and HEX.match(c)][:24]
         if palette:
-            spec["tiles"] = palette
-    return spec, os.path.join(THEMES_DIR, name)
+            tiles = palette
+
+    return colors_spec, shapes_spec, tiles
 
 
-# ---------------------------------------------------------------- применение
-def _set(theme, widget, param, value):
-    """Подменяет параметр в стандартной теме CustomTkinter, запомнив исходное значение."""
-    if widget in theme and param in theme[widget]:
-        _orig.setdefault((widget, param), theme[widget][param])
-        theme[widget][param] = value
+def load_fonts(name: str) -> dict:
+    """Шрифты из theme.json: {"family", "size", "icon_family"} (только заданные и верные)."""
+    out = {}
+    data = None if name == DEFAULT_NAME else _theme_json(name)
+    fonts = data.get("fonts") if data else None
+    if not isinstance(fonts, dict):
+        return out
+    for key in ("family", "icon_family"):
+        value = fonts.get(key)
+        if isinstance(value, str) and 0 < len(value.strip()) <= 60 and value.isprintable():
+            out[key] = value.strip()
+    size = fonts.get("size")
+    if isinstance(size, int) and not isinstance(size, bool) and 8 <= size <= 24:
+        out["size"] = size
+    return out
 
 
-def _font_section(theme):
-    """Раздел шрифта в теме CustomTkinter зависит от системы: Windows / macOS / Linux."""
-    font = theme.get("CTkFont", {})
-    key = {"win32": "Windows", "darwin": "macOS"}.get(sys.platform, "Linux")
-    return font.get(key) if isinstance(font.get(key), dict) else None
-
-
-def apply(name=None):
-    """Включает тему (без аргумента повторяет текущую). Вызывается при импорте модуля и ещё раз при старте программы."""
-    global TILE_COLORS, FONT_FAMILY, FONT_SIZE, ICON_FONT
-    if name is None:
-        name = _current["name"]
-    spec, folder = load(name)
-    _current["name"] = name if folder or name == DEFAULT_NAME else DEFAULT_NAME
-    _current["dir"] = folder
-    _images.clear()
-    for key, t in COLORS.items():
-        globals()[t["var"]] = spec["colors"][key]
-    for key, (_d, var, _x, _y) in SHAPES.items():
-        globals()[var] = spec["shapes"][key]
-    TILE_COLORS = list(spec["tiles"])
-    FONT_FAMILY, FONT_SIZE = spec["fonts"].get("family"), spec["fonts"].get("size")
-    ICON_FONT = spec["fonts"].get("icon_family", DEFAULT_ICON_FONT)
-
-    manager = getattr(ctk, "ThemeManager", None)
-    if manager is None:
-        return
-    theme = manager.theme
-    for (widget, param), value in _orig.items():  # сначала возвращаем стандартные значения
-        if widget in theme and param in theme[widget]:
-            theme[widget][param] = value
-    for key, t in COLORS.items():
-        if t["always"] or key in spec["set"]:
-            for widget, param in t["ctk"]:
-                _set(theme, widget, param, list(spec["colors"][key]))
-    for key, (_d, _v, _x, targets) in SHAPES.items():
-        if spec["shapes"][key] != SHAPES[key][0]:
-            for widget, param in targets:
-                _set(theme, widget, param, spec["shapes"][key])
-    section = _font_section(theme)
-    if section is not None:
-        for param, value in (("family", FONT_FAMILY), ("size", FONT_SIZE)):
-            if value is not None and param in section:
-                _orig.setdefault(("CTkFont", param), section[param])
-                section[param] = value
-        for param in ("family", "size"):  # возврат стандартного шрифта, если новая тема его не задаёт
-            if spec["fonts"].get(param) is None and ("CTkFont", param) in _orig:
-                section[param] = _orig[("CTkFont", param)]
-
-
-def current_name():
-    return _current["name"]
-
-
-def current_dir():
-    """Папка включённой темы или None для стандартной."""
-    return _current["dir"]
-
-
-def missing_targets():
-    """Какие ключи таблиц не нашлись в установленной версии CustomTkinter: такие ключи темы ничего не меняют.
-    Возвращает [(ключ темы, раздел CustomTkinter, параметр)]; пусто значит, всё на месте."""
-    manager = getattr(ctk, "ThemeManager", None)
-    if manager is None:
-        return []
-    theme = manager.theme
-    missing = []
-    for key, t in COLORS.items():
-        missing += [(key, w, p) for w, p in t["ctk"] if w not in theme or p not in theme[w]]
-    for key, (_d, _v, _x, targets) in SHAPES.items():
-        missing += [(key, w, p) for w, p in targets if w not in theme or p not in theme[w]]
-    section = _font_section(theme)
-    if section is None:
-        missing.append(("fonts", "CTkFont", sys.platform))
-    return missing
-
-
-def pick(pair):
-    """Из пары (светлая, тёмная) выбирает цвет для текущего режима: нужно там, где виджет не понимает пары (tk.Label)."""
-    return pair[0] if ctk.get_appearance_mode() == "Light" else pair[1]
-
-
-# ---------------------------------------------------------------- картинки темы
 def _find(folder, base):
+    """Файл base.png / base.webp в папке темы или None."""
     for ext in IMAGE_EXTS:
         path = os.path.join(folder, base + ext)
         if os.path.isfile(path):
@@ -326,221 +241,528 @@ def _find(folder, base):
     return None
 
 
-def image(name, size):
-    """Картинка темы (CTkImage size x size) или None. Файлы: name.png для обеих тем,
-    или name_light.png и name_dark.png для светлой и тёмной отдельно."""
-    folder = _current["dir"]
+def pair(key: str) -> tuple:
+    """(светлый, тёмный) цвет по ключу для текущей темы."""
+    value = _pairs.get(key, ("#ff00ff", "#ff00ff"))
+    return (value, value) if isinstance(value, str) else tuple(value)
+
+
+def pil_to_pixmap(image):
+    """Картинка PIL (RGBA) -> QPixmap."""
+    from PySide6.QtGui import QImage, QPixmap
+    image = image.convert("RGBA")
+    data = image.tobytes("raw", "RGBA")
+    qimage = QImage(data, image.width, image.height, image.width * 4, QImage.Format.Format_RGBA8888).copy()
+    return QPixmap.fromImage(qimage)
+
+
+def image(name: str, size: int):
+    """Картинка темы (QPixmap size x size) для текущего режима или None.
+    Файлы: name.png для обеих тем или name_light.png и name_dark.png по отдельности."""
+    folder = current_dir()
     if not folder:
         return None
-    key = (name, size)
+    key = (name, size, _current["mode"])
     if key not in _images:
         both = _find(folder, name)
-        light = _find(folder, name + "_light") or both
-        dark = _find(folder, name + "_dark") or both
+        path = (_find(folder, name + ("_light" if _current["mode"] == "light" else "_dark")) or both)
         result = None
-        if light or dark:
-            try:
-                with Image.open(light or dark) as a, Image.open(dark or light) as b:
-                    result = ctk.CTkImage(light_image=a.convert("RGBA"), dark_image=b.convert("RGBA"), size=(size, size))
-            except (OSError, ValueError):
-                result = None  # битая картинка: остаётся обычная кнопка
+        if path:
+            from PySide6.QtGui import QPixmap
+            from PySide6.QtCore import Qt as _Qt
+            pix = QPixmap(path)
+            if not pix.isNull():
+                result = pix.scaled(size * 2, size * 2, _Qt.AspectRatioMode.KeepAspectRatio,
+                                    _Qt.TransformationMode.SmoothTransformation)
+                result.setDevicePixelRatio(2)
         _images[key] = result
     return _images[key]
 
 
-# ---------------------------------------------------------------- карточки тем в настройках
-def _render_preview(colors, mode, size):
-    """Мини-макет окна из цветов темы: фон, плитки, панель справа с тремя кнопками (одна «включена»).
-    mode: 0 светлая, 1 тёмная."""
-    def color(key):
-        return colors[key][mode]
+# ---------------------------------------------------------------------------
+# Генератор QSS
+# ---------------------------------------------------------------------------
 
-    s = size * 4  # рисуем крупнее и уменьшаем: края получаются гладкими
-    image = Image.new("RGBA", (s, s), (0, 0, 0, 0))
-    d = ImageDraw.Draw(image)
-    d.rounded_rectangle([0, 0, s - 1, s - 1], radius=s // 8, fill=color("window_bg"))
-    margin = s // 14
-    panel_w = s // 4
-    d.rounded_rectangle([s - margin - panel_w, margin, s - margin, s - margin], radius=s // 16, fill=color("panel_bg"))
-    button = (panel_w * 6) // 10
-    bx = s - margin - panel_w + (panel_w - button) // 2
-    gap = (s - 2 * margin - 3 * button) // 4
-    for i, key in enumerate(("button", "button", "active")):
-        y = margin + gap + i * (button + gap)
-        d.rounded_rectangle([bx, y, bx + button, y + button], radius=button // 5, fill=color(key))
-    tile = (s - 2 * margin - panel_w - margin * 4) // 3
-    for row in range(3):
-        for col in range(3):
-            x = margin * 2 + col * (tile + margin)
-            y = margin * 2 + row * (tile + margin)
-            d.rounded_rectangle([x, y, x + tile, y + tile], radius=tile // 6, fill=color("button"),
-                                outline=color("select_border") if (row, col) == (0, 0) else None, width=s // 40)
-    return image.resize((size, size), Image.LANCZOS)
+def _make_qss(c: dict, s: dict) -> str:
+    br = s["button_radius"]
+    fr = s["frame_radius"]
+    er = s["entry_radius"]
+
+    return f"""
+/* === Общее === */
+QMainWindow, QDialog, QWidget[window_root="true"] {{
+    background-color: {c['window_bg']};
+}}
+QWidget {{
+    color: {c['text']};
+}}
+
+/* === Фреймы / панели === */
+QFrame {{
+    background-color: {c['panel_bg']};
+    border-radius: {fr}px;
+    border: none;
+}}
+QFrame[top="true"] {{
+    background-color: {c['panel_top_bg']};
+}}
+QFrame[flat="true"] {{
+    border-radius: 0px;
+}}
+QFrame[card="true"] {{
+    background-color: {c['card_bg']};
+}}
+QScrollArea {{
+    background-color: {c['window_bg']};
+    border: none;
+}}
+QScrollArea > QWidget > QWidget {{
+    background-color: {c['window_bg']};
+}}
+
+/* === Кнопки === */
+QPushButton {{
+    background-color: {c['button']};
+    color: {c['button_text']};
+    border: none;
+    border-radius: {br}px;
+    padding: 6px 14px;
+    min-height: 28px;
+}}
+QPushButton:hover {{
+    background-color: {c['button_hover']};
+}}
+QPushButton:pressed {{
+    background-color: {c['button_hover']};
+}}
+QPushButton:disabled {{
+    background-color: {c['panel_bg']};
+    color: {c['text_dim']};
+}}
+
+QPushButton[danger="true"] {{
+    background-color: {c['danger']};
+    color: {c['button_text']};
+}}
+QPushButton[danger="true"]:hover {{
+    background-color: {c['danger_hover']};
+}}
+
+QPushButton[ghost="true"] {{
+    background-color: transparent;
+    color: {c['ghost_text']};
+    border: 1px solid {c['button_border']};
+}}
+QPushButton[ghost="true"]:hover {{
+    background-color: {c['ghost_hover']};
+}}
+
+QPushButton[active="true"] {{
+    background-color: {c['active']};
+    color: {c['button_text']};
+}}
+QPushButton[active="true"]:hover {{
+    background-color: {c['active_hover']};
+}}
+
+QPushButton[nav="true"] {{
+    background-color: transparent;
+    color: {c['ghost_text']};
+    border: none;
+    text-align: left;
+    padding: 6px 12px;
+}}
+QPushButton[nav="true"]:hover {{
+    background-color: {c['ghost_hover']};
+}}
+QPushButton[nav="true"][selected="true"] {{
+    background-color: {c['nav_selected']};
+}}
+
+QPushButton[side="true"] {{
+    padding: 0px;
+    min-width: 44px;
+    max-width: 44px;
+    min-height: 44px;
+    max-height: 44px;
+    border-radius: {s['sidebar_radius']}px;
+}}
+QPushButton[compact="true"] {{
+    padding: 0px 8px;
+    min-height: 22px;
+}}
+QFrame[seg="true"] {{
+    background-color: {c['segmented_bg']};
+    border-radius: {br}px;
+}}
+QPushButton[seg="true"] {{
+    background-color: transparent;
+    color: {c['text']};
+    border-radius: {max(br - 2, 0)}px;
+    padding: 3px 14px;
+    min-height: 22px;
+}}
+QPushButton[seg="true"]:hover {{
+    background-color: {c['segmented_hover']};
+}}
+QPushButton[seg="true"][active="true"] {{
+    background-color: {c['button']};
+    color: {c['button_text']};
+}}
+QPushButton[seg="true"][active="true"]:hover {{
+    background-color: {c['button_hover']};
+}}
+
+/* === Поля ввода === */
+QLineEdit {{
+    background-color: {c['entry_bg']};
+    color: {c['entry_text']};
+    border: 1px solid {c['entry_border']};
+    border-radius: {er}px;
+    padding: 4px 8px;
+    selection-background-color: {c['select_bg']};
+    min-height: 26px;
+}}
+QLineEdit:focus {{
+    border-color: {c['accent']};
+}}
+QLineEdit:disabled {{
+    color: {c['text_dim']};
+}}
+
+QTextEdit, QPlainTextEdit {{
+    background-color: {c['textbox_bg']};
+    color: {c['textbox_text']};
+    border: 1px solid {c['textbox_border']};
+    border-radius: {er}px;
+    padding: 4px 8px;
+    selection-background-color: {c['select_bg']};
+}}
+QTextEdit:focus, QPlainTextEdit:focus {{
+    border-color: {c['accent']};
+}}
+
+/* === Метки === */
+QLabel {{
+    background: transparent;
+    border: none;
+    color: {c['text']};
+}}
+QLabel[dim="true"] {{
+    color: {c['text_dim']};
+}}
+QLabel[accent="true"] {{
+    color: {c['accent']};
+}}
+QLabel[error="true"] {{
+    color: {c['error']};
+}}
+
+/* === Полоса прокрутки === */
+QScrollBar:vertical {{
+    background: transparent;
+    width: 14px;
+    margin: 2px;
+}}
+QScrollBar::handle:vertical {{
+    background: {c['scrollbar']};
+    border-radius: 5px;
+    min-height: 28px;
+}}
+QScrollBar::handle:vertical:hover {{
+    background: {c['scrollbar_hover']};
+}}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+    height: 0;
+}}
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
+    background: transparent;
+}}
+QScrollBar:horizontal {{
+    background: transparent;
+    height: 8px;
+    margin: 2px;
+}}
+QScrollBar::handle:horizontal {{
+    background: {c['scrollbar']};
+    border-radius: 4px;
+    min-width: 24px;
+}}
+QScrollBar::handle:horizontal:hover {{
+    background: {c['scrollbar_hover']};
+}}
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
+    width: 0;
+}}
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{
+    background: transparent;
+}}
+
+/* === Список === */
+QListWidget {{
+    background-color: {c['panel_bg']};
+    border: none;
+    outline: none;
+}}
+QListWidget::item {{
+    padding: 6px 10px;
+    border-radius: 4px;
+    color: {c['ghost_text']};
+}}
+QListWidget::item:selected {{
+    background-color: {c['select_bg']};
+    color: {c['text']};
+}}
+QListWidget::item:hover:!selected {{
+    background-color: {c['card_hover']};
+}}
+
+/* === Выпадающий список === */
+QComboBox {{
+    background-color: {c['button']};
+    color: {c['button_text']};
+    border: none;
+    border-radius: {br}px;
+    padding: 4px 10px;
+    min-height: 28px;
+}}
+QComboBox:hover {{
+    background-color: {c['button_hover']};
+}}
+QComboBox::drop-down {{
+    border: none;
+    width: 20px;
+}}
+QComboBox QAbstractItemView {{
+    background-color: {c['dropdown_bg']};
+    color: {c['dropdown_text']};
+    border: 1px solid {c['entry_border']};
+    selection-background-color: {c['select_bg']};
+    outline: none;
+}}
+
+/* === Слайдер === */
+QSlider::groove:horizontal {{
+    background: {c['slider_track']};
+    height: 8px;
+    border-radius: 4px;
+}}
+QSlider::handle:horizontal {{
+    background: {c['button']};
+    width: 16px;
+    height: 16px;
+    margin: -4px 0;
+    border-radius: 8px;
+}}
+QSlider::handle:horizontal:hover {{
+    background: {c['button_hover']};
+}}
+QSlider::sub-page:horizontal {{
+    background: {c['button']};
+    border-radius: 4px;
+}}
+
+/* === Чекбокс / переключатель === */
+QCheckBox {{
+    color: {c['text']};
+    spacing: 8px;
+}}
+QCheckBox::indicator {{
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 2px solid {c['entry_border']};
+    background: {c['entry_bg']};
+}}
+QCheckBox::indicator:checked {{
+    background: {c['button']};
+    border-color: {c['button']};
+}}
+
+/* === Контекстное меню (правый клик по плитке, Delete) === */
+QMenu {{
+    background-color: {c['dropdown_bg']};
+    color: {c['dropdown_text']};
+    border: 1px solid {c['entry_border']};
+    padding: 4px;
+}}
+QMenu::item {{
+    background-color: transparent;
+    color: {c['dropdown_text']};
+    padding: 6px 24px;
+    border-radius: 4px;
+}}
+QMenu::item:selected {{
+    background-color: {c['dropdown_hover']};
+}}
+QMenu::item:disabled {{
+    color: {c['scrollbar']};
+}}
+QMenu::separator {{
+    height: 1px;
+    background: {c['entry_border']};
+    margin: 4px 8px;
+}}
+
+/* === Подсказка === */
+QToolTip {{
+    background-color: {c['tooltip_bg']};
+    color: {c['tooltip_text']};
+    border: none;
+    padding: 6px 10px;
+    border-radius: 4px;
+}}
+
+/* === Разделитель === */
+QFrame[frameShape="4"],
+QFrame[frameShape="5"] {{
+    background-color: {c['cmd_line']};
+    border: none;
+    max-height: 1px;
+    min-height: 1px;
+}}
+
+/* === Вкладки (если понадобятся) === */
+QTabWidget::pane {{
+    border: none;
+    background-color: {c['panel_bg']};
+}}
+QTabBar::tab {{
+    background: transparent;
+    color: {c['ghost_text']};
+    padding: 6px 16px;
+    border: none;
+}}
+QTabBar::tab:selected {{
+    color: {c['text']};
+    border-bottom: 2px solid {c['accent']};
+}}
+QTabBar::tab:hover:!selected {{
+    background-color: {c['ghost_hover']};
+}}
+"""
 
 
-def preview(name, size=96):
-    """Картинка карточки темы: свой icon.png из папки темы или макет, нарисованный по цветам темы."""
-    key = (name, size)
-    if key not in _previews:
-        spec, folder = load(name)
-        custom = _find(folder, "icon") if folder else None
-        result = None
-        try:
-            if custom:
-                with Image.open(custom) as source:
-                    fitted = source.convert("RGBA")
-                    fitted.thumbnail((size, size), Image.LANCZOS)          # вписываем, не искажая
-                    canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-                    canvas.paste(fitted, ((size - fitted.width) // 2, (size - fitted.height) // 2))
-                light = dark = canvas
-            else:
-                light, dark = _render_preview(spec["colors"], 0, size), _render_preview(spec["colors"], 1, size)
-            result = ctk.CTkImage(light_image=light, dark_image=dark, size=(size, size))
-        except (OSError, ValueError):
-            result = None  # битая картинка: карточка без превью, с названием
-        _previews[key] = result
-    return _previews[key]
+# ---------------------------------------------------------------------------
+# Применение темы
+# ---------------------------------------------------------------------------
+
+def apply(name: str = None, mode: str = None,
+          app: QApplication = None) -> None:
+    """
+    Применяет тему к QApplication.
+    name — папка темы (None = оставить текущую)
+    mode — "dark" / "light" / "system" (None = оставить текущий)
+    app  — экземпляр QApplication (None = QApplication.instance())
+    """
+    global _colors, _shapes, CURRENT_TILE_COLORS, _pairs, FONT_FAMILY, FONT_SIZE, ICON_FONT
+
+    if name is not None:
+        _current["name"] = name
+    if mode is not None:
+        _current["mode"] = _effective_mode(mode)
+
+    colors_spec, shapes_spec, tiles = load(_current["name"])
+
+    _pairs = dict(colors_spec)
+    _images.clear()
+    fonts = load_fonts(_current["name"])
+    FONT_FAMILY, FONT_SIZE = fonts.get("family"), fonts.get("size")
+    ICON_FONT = fonts.get("icon_family", DEFAULT_ICON_FONT)
+    _colors = {k: _pick(v, _current["mode"]) for k, v in colors_spec.items()}
+    _shapes = shapes_spec
+    CURRENT_TILE_COLORS = tiles
+
+    qapp = app or QApplication.instance()
+    if qapp:
+        qapp.setStyleSheet(_make_qss(_colors, _shapes))
+        font = QFont(FONT_FAMILY or "Segoe UI")
+        font.setPixelSize(FONT_SIZE or 13)
+        qapp.setFont(font)  # шрифт не в QSS: иначе он перебивает setFont/setPixelSize у виджетов
 
 
-def clear_previews():
-    _previews.clear()
+# ---------------------------------------------------------------------------
+# Публичный API для виджетов
+# ---------------------------------------------------------------------------
+
+def color(key: str) -> str:
+    """Возвращает текущий цвет по ключу ("#rrggbb")."""
+    return _colors.get(key, "#ff00ff")   # маджента = сигнал об ошибке
 
 
-def _folder_size(path, limit):
-    total = 0
-    for root, _dirs, files in os.walk(path):
-        for fname in files:
-            try:
-                total += os.path.getsize(os.path.join(root, fname))
-            except OSError:
-                pass
-            if total > limit:
-                return total
-    return total
+def shape(key: str) -> int:
+    """Возвращает текущее значение формы."""
+    return _shapes.get(key, 6)
 
 
-def _safe_folder_name(text):
-    """Имя папки из произвольного текста: без запрещённых символов и без _ / . в начале (так не спрятать тему)."""
-    return re.sub(r'[<>:"/\\|?*]', "", text).strip(" .").lstrip("_.") or "theme"
+def current_name() -> str:
+    return _current["name"]
 
 
-def _free_folder(base):
-    root = os.path.abspath(THEMES_DIR)
-    name, n = base, 2
-    while os.path.exists(os.path.join(root, name)):
-        name = f"{base} ({n})"
-        n += 1
-    return name
+def current_mode() -> str:
+    return _current["mode"]
 
 
-def add_theme(src):
-    """Добавляет тему из папки src: проверяет её и копирует в themes.
-    Возвращает (имя папки в themes, None) или (None, текст ошибки)."""
-    src = os.path.abspath(src)
-    json_path = os.path.join(src, "theme.json")
-    if not os.path.isfile(json_path):
-        return None, "В этой папке нет файла theme.json. Выбери папку самой темы."
+def current_dir():
+    """Папка включённой темы или None для стандартной."""
+    name = _current["name"]
+    if name == DEFAULT_NAME:
+        return None
+    folder = os.path.join(THEMES_DIR, name)
+    return folder if os.path.isdir(folder) else None
+
+
+def list_themes() -> list[tuple[str, str]]:
+    """[(папка, название)]: сначала стандартная, потом найденные."""
+    found = [(DEFAULT_NAME, "Стандартная")]
     try:
-        with open(json_path, encoding="utf-8") as f:
-            data = json.load(f)
-    except (OSError, ValueError):
-        return None, "Файл theme.json не читается: проверь, что это корректный JSON."
-    if not isinstance(data, dict) or not any(isinstance(data.get(s), dict) for s in THEME_SECTIONS):
-        return None, "В theme.json нет ни одного раздела (colors, shapes, fonts, tiles)."
-    root = os.path.abspath(THEMES_DIR)
-    if os.path.normcase(os.path.dirname(src)) == os.path.normcase(root):
-        return os.path.basename(src), None  # тема уже лежит в themes
-    if _folder_size(src, MAX_THEME_BYTES) > MAX_THEME_BYTES:
-        return None, "Папка слишком большая для темы (больше 20 МБ)."
-    name = _free_folder(_safe_folder_name(os.path.basename(src)))
+        folders = sorted(os.listdir(THEMES_DIR))
+    except OSError:
+        return found
+    for folder in folders:
+        if folder == DEFAULT_NAME or folder.startswith(("_", ".")):
+            continue
+        data = _theme_json(folder)
+        if data is not None:
+            title = data.get("name")
+            found.append((
+                folder,
+                title if isinstance(title, str) and title.strip() else folder
+            ))
+    return found
+
+
+# ---------------------------------------------------------------------------
+# Утилита: цвет текста на плитке (тёмный или светлый)
+# ---------------------------------------------------------------------------
+
+def tile_text_color(background: str) -> str:
+    """Возвращает цвет текста для данного фона плитки."""
     try:
-        os.makedirs(root, exist_ok=True)
-        shutil.copytree(src, os.path.join(root, name))
-    except OSError as e:
-        return None, f"Не удалось скопировать тему: {e}"
-    return name, None
+        r = int(background[1:3], 16)
+        g = int(background[3:5], 16)
+        b = int(background[5:7], 16)
+    except (ValueError, TypeError, IndexError):
+        return color("tile_text_light")
+    brightness = 0.299 * r + 0.587 * g + 0.114 * b
+    return color("tile_text_dark") if brightness > 160 else color("tile_text_light")
 
 
-def template_spec(title="Моя тема"):
-    """Полный theme.json со всеми ключами и стандартными значениями (основа для своей темы)."""
-    return {
-        "name": title,
-        "colors": {k: list(t["default"]) for k, t in COLORS.items()},
-        "shapes": {k: v[0] for k, v in SHAPES.items()},
-        "fonts": {"family": "Segoe UI", "size": 13, "icon_family": DEFAULT_ICON_FONT},
-        "tiles": {"palette": list(DEFAULT_TILE_COLORS)},
-    }
+# ---------------------------------------------------------------------------
+# Инициализация при импорте (только данные, без QApplication)
+# ---------------------------------------------------------------------------
 
-
-def create_theme(title):
-    """Создаёт в themes новую тему с полным theme.json (стандартные значения), чтобы поправить нужное.
-    Возвращает (имя папки, None) или (None, текст ошибки)."""
-    title = (title or "").strip()
-    if not title:
-        return None, "Название не может быть пустым."
-    name = _free_folder(_safe_folder_name(title))
-    folder = os.path.join(os.path.abspath(THEMES_DIR), name)
-    try:
-        os.makedirs(folder)
-        with open(os.path.join(folder, "theme.json"), "w", encoding="utf-8") as f:
-            json.dump(template_spec(title), f, ensure_ascii=False, indent=2)
-    except OSError as e:
-        return None, f"Не удалось создать тему: {e}"
-    return name, None
-
-
-def readme_text():
-    """Описание формата темы (themes/README.txt), собранное из таблиц, чтобы оно не расходилось с кодом."""
-    lines = ["ТЕМЫ ОФОРМЛЕНИЯ", "",
-             "Тема это папка внутри «themes». Выбрать тему: Настройки -> Темы -> нажать на карточку -> «Перезапустить и применить».",
-             "Папка «themes» лежит рядом с main.py (при запуске из VS Code) или рядом с exe (в собранной версии).", "",
-             "КАК СДЕЛАТЬ СВОЮ ТЕМУ",
-             "  Способ 1: Настройки -> Темы -> «Создать свою». Появится папка с готовым theme.json, где уже есть все ключи.",
-             "  Способ 2: скопируй папку _template, назови как хочешь (имя без _ и точки в начале).",
-             "  Дальше открой theme.json и поменяй нужное. Лишние ключи можно удалить: пропущенное берётся стандартное.",
-             "  Положи свой icon.png (картинка карточки). Без него карточка покажет макет, нарисованный по цветам темы.",
-             "  Настройки -> Темы -> «Обновить список». Тема вне themes добавляется кнопкой «＋ Добавить тему» (копируется).",
-             "  Папки, имя которых начинается с _ или точки, в список не попадают (так спрятан шаблон).", "",
-             "ФОРМАТ theme.json",
-             '  { "name": "Название в списке", "colors": {...}, "shapes": {...}, "fonts": {...}, "tiles": {"palette": [...]} }',
-             "  Цвет это пара [светлая, тёмная] вида \"#rrggbb\". Одна строка \"#rrggbb\" значит один цвет для обеих тем.",
-             "  Неверное значение пропускается и берётся стандартное.", "", "ЦВЕТА (colors)"]
-    width = max(len(k) for k in COLORS)
-    lines += [f"  {k.ljust(width)}  {t['desc']}" for k, t in COLORS.items()]
-    lines += ["", "СКРУГЛЕНИЯ (shapes), число от 0 до 40"]
-    lines += [f"  {k.ljust(width)}  {v[2]}" for k, v in SHAPES.items()]
-    lines += ["", "ШРИФТ (fonts)"] + [f"  {k.ljust(width)}  {d}" for k, d in FONT_KEYS.items()]
-    lines += ["", "ПАЛИТРА ПЛИТОК (tiles.palette)",
-              "  Список цветов #rrggbb (до 24): новые плитки получают их по кругу, они же в окне выбора цвета плитки.", "",
-              "КАРТИНКИ (png или webp, лучше квадратные, от 128x128, с прозрачностью)",
-              "  icon.png              картинка карточки темы в настройках (256x256)",
-              "  plus.png              значок на плитке «＋»",
-              "  sidebar_command.png   кнопка командной строки",
-              "  sidebar_notes.png     кнопка заметок",
-              "  sidebar_lock.png      кнопка блокировки плиток",
-              "  sidebar_perf.png      кнопка режима производительности",
-              "  sidebar_settings.png  кнопка настроек",
-              "  Для светлой и тёмной темы можно положить разные: plus_light.png и plus_dark.png.",
-              "  Текстуры кнопок правой панели (картинка вместо цветной заливки, значок рисуется поверх):",
-              "  texture_button.png        обычная кнопка (без этого файла текстур нет, кнопки остаются цветными)",
-              "  texture_button_hover.png  кнопка под курсором (нет файла: та же текстура, чуть светлее)",
-              "  texture_active.png        включённая функция (нет файла: та же текстура, подкрашенная цветом active)",
-              "  Значок берётся из sidebar_<имя>.png, а если его нет, рисуется символ кнопки шрифтом icon_family.",
-              "  Картинка обрезается до квадрата и скругляется по sidebar_radius. Если края текстуры обрезаются,",
-              "  поставь shapes.texture_inset = 2.",
-              "  Нет картинки, остаётся обычный значок.", ""]
-    return "\n".join(lines)
-
-
-# ---------------------------------------------------------------- запуск
-def _saved_theme_name():
-    """Какую тему выбрали в прошлый раз (читаем settings.json напрямую, чтобы не тянуть лишние модули)."""
+def _saved_theme_settings() -> tuple[str, str]:
     try:
         with open(SETTINGS_FILE, encoding="utf-8") as f:
-            name = json.load(f).get("theme_name")
-        return name if isinstance(name, str) and name else DEFAULT_NAME
-    except (OSError, ValueError, AttributeError):
-        return DEFAULT_NAME
+            s = json.load(f)
+        return s.get("theme_name", DEFAULT_NAME), s.get("theme_mode", "dark")
+    except (OSError, ValueError):
+        return DEFAULT_NAME, "dark"
 
 
-apply(_saved_theme_name())  # тема включается при первом импорте: до окон и до констант в других модулях
+_theme_name, _theme_mode = _saved_theme_settings()
+_current["name"] = _theme_name
+# mode пока сохраняем как есть; _effective_mode вызовется в apply()
+# после создания QApplication в main.py
+_current["mode"] = _theme_mode if _theme_mode != "system" else "dark"

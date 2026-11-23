@@ -1,54 +1,73 @@
-"""Раздел FAQ в настройках: вопросы раскрываются по клику, сверху поиск по вопросам и ответам.
+"""Раздел FAQ в настройках (PySide6): вопросы раскрываются по клику, сверху поиск по вопросам и ответам.
 Сами вопросы лежат в faq_data.py."""
-import customtkinter as ctk
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QLineEdit, QPushButton, QScrollArea, QVBoxLayout, QWidget
 
 import sounds
-import theme
 from faq_data import FAQ
 from i18n import tr
-
-DIM = theme.DIM
-ACCENT = theme.ACCENT
+from ui_kit import clear_layout, label
 
 
-class FaqPage(ctk.CTkFrame):
-    def __init__(self, master):
-        super().__init__(master, fg_color="transparent")
+class FaqPage(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.opened = set()  # номера раскрытых вопросов
-        self.query = ctk.StringVar()
-        self.query.trace_add("write", lambda *_: self.render())
-        ctk.CTkEntry(self, textvariable=self.query, placeholder_text=tr("Поиск по вопросам")).pack(
-            fill="x", padx=8, pady=(0, 8))
-        self.box = ctk.CTkFrame(self, fg_color="transparent")
-        self.box.pack(fill="x")
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+        self.search = QLineEdit()
+        self.search.setPlaceholderText(tr("Поиск по вопросам"))
+        self.search.textChanged.connect(self.render)
+        root.addWidget(self.search)
+        self.box = QVBoxLayout()
+        root.addLayout(self.box)
         self.render()
-
-    def matches(self, question, answer, query):
-        return not query or query in question.lower() or query in answer.lower()
 
     def toggle(self, index):
         sounds.play("faq_toggle")
         self.opened.symmetric_difference_update({index})
         self.render()
 
-    def render(self):
-        for child in self.box.winfo_children():
-            child.destroy()
-        query = self.query.get().strip().lower()
+    def scroll_bar(self):
+        """Полоса прокрутки области, в которой лежит страница (или None)."""
+        widget = self.parent()
+        while widget is not None and not isinstance(widget, QScrollArea):
+            widget = widget.parent()
+        return widget.verticalScrollBar() if widget is not None else None
+
+    def render(self, *_):
+        # при пересборке содержимое на миг укорачивается и прокрутка сбрасывается вниз: запоминаем и возвращаем
+        bar = self.scroll_bar()
+        if bar is not None:
+            position = bar.value()
+            self.setMinimumHeight(self.height())
+            QTimer.singleShot(0, lambda: self.restore_scroll(bar, position))
+        self.rebuild()
+
+    def restore_scroll(self, bar, position):
+        try:
+            self.setMinimumHeight(0)
+            bar.setValue(position)
+        except RuntimeError:
+            pass  # страницу уже закрыли
+
+    def rebuild(self):
+        clear_layout(self.box)
+        query = self.search.text().strip().lower()
         shown = 0
         for index, (question, answer) in enumerate(FAQ):
-            if not self.matches(question, answer, query):
+            if query and query not in question.lower() and query not in answer.lower():
                 continue
             shown += 1
             expanded = bool(query) or index in self.opened  # при поиске ответы сразу видны
-            ctk.CTkButton(
-                self.box, text=("▾  " if expanded else "▸  ") + question, anchor="w", height=34,
-                fg_color="transparent", hover_color=theme.GHOST_HOVER, text_color=theme.GHOST_TEXT,
-                font=ctk.CTkFont(size=14, weight="bold"), command=lambda i=index: self.toggle(i),
-            ).pack(fill="x", padx=4, pady=(4, 0))
+            btn = QPushButton(("▾  " if expanded else "▸  ") + question)
+            btn.setProperty("nav", True)
+            btn.setStyleSheet("font-size: 14px; font-weight: bold;")
+            btn.clicked.connect(lambda _=False, i=index: self.toggle(i))
+            self.box.addWidget(btn)
             if expanded:
-                ctk.CTkLabel(
-                    self.box, text=answer, text_color=DIM, anchor="w", justify="left", wraplength=470,
-                ).pack(fill="x", padx=(34, 12), pady=(0, 6))
+                ans = label(answer, dim=True)
+                ans.setContentsMargins(30, 0, 10, 6)
+                self.box.addWidget(ans)
         if not shown:
-            ctk.CTkLabel(self.box, text=tr("Ничего не найдено"), text_color=DIM).pack(pady=14)
+            self.box.addWidget(label(tr("Ничего не найдено"), dim=True))

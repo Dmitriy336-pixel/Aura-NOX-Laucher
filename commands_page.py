@@ -1,16 +1,14 @@
-"""Страница «Команды» в настройках: список своих команд и окно создания и правки."""
-import tkinter as tk
-from tkinter import filedialog, messagebox
+"""Страница «Команды» в настройках (PySide6): список своих команд и окно создания и правки."""
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (QDialog, QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLineEdit, QPlainTextEdit,
+                               QPushButton, QVBoxLayout, QWidget)
 
-import customtkinter as ctk
-
+import dialogs
 import theme
 import user_commands as uc
 from i18n import tr
+from ui_kit import Segmented, button, clear_layout, label
 
-ACCENT = theme.ACCENT
-DIM = theme.DIM
-ERROR = theme.ERROR
 HINTS = {
     "open": tr("Один путь или адрес сайта. {} подставит текст, введённый после команды."),
     "set": tr("По одному пути или адресу в строке: всё откроется по очереди."),
@@ -18,54 +16,47 @@ HINTS = {
 }
 
 
-class CommandsPage(ctk.CTkFrame):
-    def __init__(self, master, app):
-        super().__init__(master, fg_color="transparent")
+class CommandsPage(QWidget):
+    def __init__(self, parent, app):
+        super().__init__(parent)
         self.app = app
-        ctk.CTkLabel(
-            self, anchor="w", justify="left", wraplength=480, text_color=DIM,
-            text=tr("Свои команды для командной строки: открывают программы, папки и сайты или "
-                 "выполняют команды. Пример: команда «ютуб» с адресом "
-                 "https://www.youtube.com/results?search_query={} ищет на YouTube то, что напишешь дальше."),
-        ).pack(fill="x", padx=8, pady=(0, 10))
-        ctk.CTkButton(self, text=tr("Новая команда"), command=self.add).pack(anchor="w", padx=8, pady=(0, 8))
-        self.list = ctk.CTkFrame(self, fg_color="transparent")
-        self.list.pack(fill="x")
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.addWidget(label(
+            tr("Свои команды для командной строки: открывают программы, папки и сайты или "
+               "выполняют команды. Пример: команда «ютуб» с адресом "
+               "https://www.youtube.com/results?search_query={} ищет на YouTube то, что напишешь дальше."), dim=True))
+        root.addWidget(button(tr("Новая команда"), self.add, width=170), 0, Qt.AlignmentFlag.AlignLeft)
+        self.list = QVBoxLayout()
+        root.addLayout(self.list)
         self.render()
 
     def render(self):
-        for child in self.list.winfo_children():
-            child.destroy()
+        clear_layout(self.list)
         entries = uc.load()
         if not entries:
-            ctk.CTkLabel(self.list, text=tr("Пока нет своих команд."), text_color=DIM).pack(anchor="w", padx=8, pady=8)
+            self.list.addWidget(label(tr("Пока нет своих команд."), dim=True))
         for index, entry in enumerate(entries):
-            row = ctk.CTkFrame(self.list, corner_radius=8)
-            row.pack(fill="x", padx=6, pady=3)
-            row.grid_columnconfigure(0, weight=1)
-            ctk.CTkLabel(
-                row, text=", ".join(entry["names"]), text_color=ACCENT, anchor="w",
-                font=ctk.CTkFont(size=14, weight="bold"),
-            ).grid(row=0, column=0, sticky="w", padx=12, pady=(8, 0))
-            ctk.CTkLabel(
-                row, text=f'{uc.ACTIONS.get(entry["action"], "?")}: {uc.summary(entry)}', text_color=DIM,
-                anchor="w", justify="left", wraplength=330,
-            ).grid(row=1, column=0, sticky="w", padx=12, pady=(0, 8))
-            ctk.CTkButton(row, text=tr("Изменить"), width=80, height=28,
-                          command=lambda i=index: self.edit(i)).grid(row=0, column=1, rowspan=2, padx=(0, 6))
-            ctk.CTkButton(row, text=tr("Удалить"), width=80, height=28, fg_color=theme.DANGER, hover_color=theme.DANGER_HOVER,
-                          command=lambda i=index: self.delete(i)).grid(row=0, column=2, rowspan=2, padx=(0, 10))
+            card = QFrame()
+            card.setProperty("card", True)
+            grid = QGridLayout(card)
+            grid.setColumnStretch(0, 1)
+            grid.addWidget(label(", ".join(entry["names"]), accent=True, bold=True, size=14), 0, 0)
+            grid.addWidget(label(f'{uc.ACTIONS.get(entry["action"], "?")}: {uc.summary(entry)}', dim=True), 1, 0)
+            grid.addWidget(button(tr("Изменить"), lambda i=index: self.edit(i), width=90), 0, 1, 2, 1)
+            grid.addWidget(button(tr("Удалить"), lambda i=index: self.delete(i), width=90, danger=True), 0, 2, 2, 1)
+            self.list.addWidget(card)
 
     def add(self):
-        CommandEditor(self.winfo_toplevel(), self.app, None, self.saved)
+        CommandEditor(self.window(), self.app, None, self.saved).open()
 
     def edit(self, index):
-        CommandEditor(self.winfo_toplevel(), self.app, index, self.saved)
+        CommandEditor(self.window(), self.app, index, self.saved).open()
 
     def delete(self, index):
         entries = uc.load()
         names = ", ".join(entries[index]["names"])
-        if not messagebox.askyesno(tr("Удаление команды"), tr('Удалить команду «{names}»?', names=names), parent=self.winfo_toplevel()):
+        if not dialogs.ask(self.window(), tr("Удаление команды"), tr('Удалить команду «{names}»?', names=names)):
             return
         del entries[index]
         uc.save(entries)
@@ -73,106 +64,100 @@ class CommandsPage(ctk.CTkFrame):
 
     def saved(self):
         self.app.reload_commands()  # командная строка сразу узнаёт об изменениях
-        if self.winfo_exists():
-            self.render()
+        self.render()
 
 
-class CommandEditor(ctk.CTkToplevel):
+class CommandEditor(QDialog):
     def __init__(self, master, app, index, on_saved):
         super().__init__(master)
         self.app, self.index, self.on_saved = app, index, on_saved
         entries = uc.load()
         entry = entries[index] if index is not None else {"names": [], "description": "", "action": "open", "target": ""}
         self.other_names = {n for i, e in enumerate(entries) if i != index for n in e["names"]}
+        self.action_key = entry["action"] if entry["action"] in uc.ACTIONS else "open"
 
-        self.title(tr("Новая команда") if index is None else tr("Правка команды"))
-        self.geometry("540x520")
-        self.minsize(480, 480)
-        self.transient(master)
+        self.setWindowTitle(tr("Новая команда") if index is None else tr("Правка команды"))
+        self.resize(540, 520)
+        self.setMinimumSize(480, 480)
+        self.setModal(True)
 
-        pad = {"padx": 18, "anchor": "w"}
-        ctk.CTkLabel(self, text=tr("Названия через запятую (можно русские и английские)")).pack(pady=(16, 2), **pad)
-        self.names = ctk.CTkEntry(self, width=460, placeholder_text=tr("например: ютуб, yt"))
-        self.names.pack(**pad)
-        ctk.CTkLabel(self, text=tr("Описание (необязательно, видно в «помощь»)")).pack(pady=(12, 2), **pad)
-        self.description = ctk.CTkEntry(self, width=460)
-        self.description.pack(**pad)
+        root = QVBoxLayout(self)
+        root.addWidget(label(tr("Названия через запятую (можно русские и английские)")))
+        self.names = QLineEdit(", ".join(entry["names"]))
+        self.names.setPlaceholderText(tr("например: ютуб, yt"))
+        root.addWidget(self.names)
+        root.addWidget(label(tr("Описание (необязательно, видно в «помощь»)")))
+        self.description = QLineEdit(entry.get("description", ""))
+        root.addWidget(self.description)
 
-        ctk.CTkLabel(self, text=tr("Что делает")).pack(pady=(12, 2), **pad)
-        self.kind = ctk.CTkSegmentedButton(self, values=list(uc.ACTIONS.values()), command=self.kind_changed)
-        self.kind.pack(**pad)
-        self.hint = ctk.CTkLabel(self, text="", text_color=DIM, wraplength=460, justify="left")
-        self.hint.pack(pady=(6, 2), **pad)
-        self.target = ctk.CTkTextbox(self, width=460, height=100)
-        self.target.pack(**pad)
+        root.addWidget(label(tr("Что делает")))
+        self.kind_seg = Segmented(uc.ACTIONS, self.action_key, self.kind_changed)
+        seg = QHBoxLayout()
+        seg.addWidget(self.kind_seg)
+        seg.addStretch(1)
+        root.addLayout(seg)
+        self.hint = label("", dim=True)
+        root.addWidget(self.hint)
+        self.target = QPlainTextEdit(entry["target"])
+        self.target.setFixedHeight(100)
+        root.addWidget(self.target)
 
-        self.pick_row = ctk.CTkFrame(self, fg_color="transparent")
-        self.pick_row.pack(pady=(6, 0), **pad)
-        ctk.CTkButton(self.pick_row, text=tr("Выбрать файл…"), width=130, command=self.pick_file).pack(side="left")
-        ctk.CTkButton(self.pick_row, text=tr("Выбрать папку…"), width=130, command=self.pick_folder).pack(side="left", padx=8)
+        self.pick_row = QWidget()
+        pr = QHBoxLayout(self.pick_row)
+        pr.setContentsMargins(0, 0, 0, 0)
+        pr.addWidget(button(tr("Выбрать файл…"), self.pick_file, width=150))
+        pr.addWidget(button(tr("Выбрать папку…"), self.pick_folder, width=150))
+        pr.addStretch(1)
+        root.addWidget(self.pick_row)
 
-        self.error = ctk.CTkLabel(self, text="", text_color=ERROR, wraplength=460, justify="left")
-        self.error.pack(pady=(8, 0), **pad)
-        buttons = ctk.CTkFrame(self, fg_color="transparent")
-        buttons.pack(side="bottom", pady=14, padx=18, anchor="e")
-        ctk.CTkButton(buttons, text=tr("Отмена"), width=100, fg_color="transparent", border_width=1,
-                      text_color=theme.GHOST_TEXT, hover_color=theme.GHOST_HOVER,
-                      command=self.destroy).pack(side="left", padx=(0, 8))
-        ctk.CTkButton(buttons, text=tr("Сохранить"), width=120, command=self.save).pack(side="left")
-
-        self.names.insert(0, ", ".join(entry["names"]))
-        self.description.insert(0, entry.get("description", ""))
-        self.kind.set(uc.ACTIONS[entry["action"]])
-        self.target.insert("1.0", entry["target"])
-        self.kind_changed(self.kind.get())
-        self.after(150, self.start)
-
-    def start(self):
-        try:
-            self.grab_set()
-        except tk.TclError:
-            pass
-        self.names.focus_set()
+        self.error = label("")
+        self.error.setStyleSheet(f"color: {theme.color('error')};")
+        root.addWidget(self.error)
+        root.addStretch(1)
+        buttons = QHBoxLayout()
+        buttons.addStretch(1)
+        buttons.addWidget(button(tr("Отмена"), self.reject, width=100, ghost=True))
+        buttons.addWidget(button(tr("Сохранить"), self.save, width=120))
+        root.addLayout(buttons)
+        self.kind_changed(self.action_key)
+        self.names.setFocus()
 
     def action(self):
-        return next(key for key, label in uc.ACTIONS.items() if label == self.kind.get())
+        return self.action_key
 
-    def kind_changed(self, _label):
-        action = self.action()
-        self.hint.configure(text=HINTS[action])
-        if action == "shell":
-            self.pick_row.pack_forget()
-        elif not self.pick_row.winfo_ismapped():
-            self.pick_row.pack(pady=(6, 0), padx=18, anchor="w", after=self.target)
+    def kind_changed(self, key):
+        self.action_key = key
+        self.kind_seg.set(key)
+        self.hint.setText(HINTS[key])
+        self.pick_row.setVisible(key != "shell")
 
     def add_path(self, path):
-        text = self.target.get("1.0", "end").strip()
+        text = self.target.toPlainText().strip()
         if self.action() == "set" and text:
-            self.target.insert("end", "\n" + path)  # в наборе каждая запись с новой строки
+            self.target.appendPlainText(path)  # в наборе каждая запись с новой строки
         else:
-            self.target.delete("1.0", "end")
-            self.target.insert("1.0", path)
+            self.target.setPlainText(path)
 
     def pick_file(self):
-        path = filedialog.askopenfilename(parent=self, title=tr("Выбери программу или файл"))
+        path, _ = QFileDialog.getOpenFileName(self, tr("Выбери программу или файл"))
         if path:
             self.add_path(path.replace("/", "\\"))
 
     def pick_folder(self):
-        path = filedialog.askdirectory(parent=self, title=tr("Выбери папку"))
+        path = QFileDialog.getExistingDirectory(self, tr("Выбери папку"))
         if path:
             self.add_path(path.replace("/", "\\"))
 
     def save(self):
         entry = {
-            "names": uc.parse_names(self.names.get()),
-            "description": self.description.get().strip(),
+            "names": uc.parse_names(self.names.text()),
+            "description": self.description.text().strip(),
             "action": self.action(),
-            "target": self.target.get("1.0", "end").strip(),
+            "target": self.target.toPlainText().strip(),
         }
         problem = uc.validate(entry, self.other_names, self.app.registry.builtin_names)
         if problem:
-            self.error.configure(text=problem)
+            self.error.setText(problem)
             return
         entries = uc.load()
         if self.index is None:
@@ -180,5 +165,5 @@ class CommandEditor(ctk.CTkToplevel):
         else:
             entries[self.index] = entry
         uc.save(entries)
-        self.destroy()
+        self.accept()
         self.on_saved()

@@ -1,10 +1,17 @@
-"""Правая узкая панель. Кнопки управляются мышью и клавиатурой (Tab, стрелки, Enter)."""
-import customtkinter as ctk
+# sidebar.py
+"""Правая узкая панель на PySide6. Кнопки управляются мышью и клавиатурой (Tab, стрелки, Enter).
+Состояние «включена» задаётся свойством active (стиль QPushButton[active="true"] лежит в theme.py).
+Если в теме есть texture_button.png, кнопка целиком становится картинкой (textures.py); иначе, если есть
+sidebar_<имя>.png, значок-картинка лежит на цветной кнопке; ничего нет: цветная кнопка с символом."""
+
+from PySide6.QtCore import Qt
+from PySide6.QtCore import QRect, QSize
+from PySide6.QtGui import QFont, QIcon, QPainter
+from PySide6.QtWidgets import QFrame, QPushButton, QVBoxLayout
 
 import sounds
 import textures
 import theme
-from tooltip import Tooltip
 from i18n import tr
 
 MIN_WIDTH = 64  # кнопка 44 px + по 10 px отступа с каждой стороны
@@ -12,148 +19,158 @@ LOCK_ON_TEXT = tr("Плитки закреплены: перетаскивани
 LOCK_OFF_TEXT = tr("Плитки можно перетаскивать, чтобы менять местами.\nНажми, чтобы закрепить")
 
 
-class Sidebar(ctk.CTkFrame):
-    def __init__(self, master, on_settings, on_command, on_perf, on_notes, on_lock, width):
-        super().__init__(master, width=max(width, MIN_WIDTH), corner_radius=0)
-        self.grid_propagate(False)             # держим ширину панели, а не подгоняем под кнопки
-        self.grid_rowconfigure(0, weight=1)  # пустое место сверху, оно и прижимает кнопки вниз
+class SideButton(QPushButton):
+    def __init__(self, text, font_size, parent=None, size=44):
+        super().__init__(text, parent)
+        self.px = size     # сторона кнопки: 44 на панели, меньше в командной строке
+        self.glyph = text
+        self.skin = None   # оформление с текстурой (если тема его даёт)
+        self.state = {"active": False, "selected": False, "hover": False}
+        self.setFixedSize(size, size)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)  # фокус клавиатуры всегда у главного окна
+        self.setProperty("side", True)              # без внутренних отступов кнопки: значок помещается в 44 px
+        font = QFont(theme.ICON_FONT if text != ">_" else self.font().family())
+        font.setPixelSize(font_size)
+        if text == ">_":
+            font.setBold(True)
+        self.setFont(font)
 
-        self.command_btn = ctk.CTkButton(
-            self, text=">_", width=44, height=44,
-            font=ctk.CTkFont(size=16, weight="bold"), command=on_command,
-        )
-        self.command_btn.grid(row=1, column=0, padx=10, pady=(10, 0))
+    def enterEvent(self, event):
+        sounds.play("hover")
+        self.set_state(hover=True)
+        super().enterEvent(event)
 
-        # Кнопка заметок
-        self.notes_btn = ctk.CTkButton(
-            self, text="✎", width=44, height=44,
-            font=ctk.CTkFont(size=22), command=on_notes,
-        )
-        self.notes_btn.grid(row=2, column=0, padx=10, pady=(10, 0))
+    def leaveEvent(self, event):
+        self.set_state(hover=False)
+        super().leaveEvent(event)
 
-        # Кнопка блокировки перетаскивания плиток (зелёная = плитки закреплены)
-        self.lock_btn = ctk.CTkButton(
-            self, text="⇅", width=44, height=44,
-            font=ctk.CTkFont(size=22), command=on_lock,
-        )
-        self.lock_btn.grid(row=3, column=0, padx=10, pady=(10, 0))
-        self.lock_tip = Tooltip(self.lock_btn, LOCK_OFF_TEXT, side="left")  # панель справа, поэтому подсказка слева
+    def set_state(self, **changes):
+        if all(self.state[key] == value for key, value in changes.items()):
+            return
+        self.state.update(changes)
+        if self.skin is not None:
+            self.draw()
 
-        # Кнопка режима высокой производительности
-        self.perf_btn = ctk.CTkButton(
-            self, text="⚡", width=44, height=44,
-            font=ctk.CTkFont(size=20), command=on_perf,
-        )
-        self.perf_btn.grid(row=4, column=0, padx=10, pady=(10, 0))
+    def draw(self):
+        """Перерисовать кнопку с текстурой: картинка по состоянию (включена важнее наведения)."""
+        self.update()
 
-        self.settings_btn = ctk.CTkButton(
-            self, text="⚙", width=44, height=44,
-            font=ctk.CTkFont(size=22), command=on_settings,
-        )
-        self.settings_btn.grid(row=5, column=0, padx=10, pady=10)
+    def paintEvent(self, event):
+        if self.skin is None:
+            super().paintEvent(event)
+            return
+        state = self.state
+        kind = "active" if state["active"] else ("hover" if state["hover"] else "normal")
+        pixmap = self.skin.image(kind, state["selected"])
+        if pixmap is None:
+            return
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+        shown = self.skin.shown
+        offset = (self.width() - shown) // 2  # отступ от края (shapes.texture_inset), картинка по центру
+        p.drawPixmap(QRect(offset, offset, shown, shown), pixmap)
 
+    def apply_texture(self, name):
+        """Оформление из выбранной темы (см. описание модуля)."""
+        self.skin = textures.skin(name, self.glyph, self.px)
+        if self.skin is not None:
+            self.setText("")
+            self.setStyleSheet("QPushButton { background: transparent; border: none; }")
+            self.draw()
+            return
+        self.setStyleSheet("")
+        pixmap = theme.image("sidebar_" + name, 30)
+        if pixmap is not None:
+            self.setText("")
+            self.setIcon(QIcon(pixmap))
+            self.setIconSize(QSize(30, 30))
+
+
+class Sidebar(QFrame):
+    def __init__(self, parent, on_settings, on_command, on_perf, on_notes, on_lock, width):
+        super().__init__(parent)
+        self.setFixedWidth(max(width, MIN_WIDTH))
+        self.setStyleSheet(f"Sidebar {{ background-color: {theme.color('panel_bg')}; border-radius: 0px; }}")
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 10, 0, 10)
+        layout.setSpacing(10)
+        layout.addStretch(1)  # пустое место сверху прижимает кнопки вниз
+
+        self.command_btn = SideButton(">_", 16, self)
+        self.notes_btn = SideButton("✎", 22, self)
+        self.lock_btn = SideButton("⇅", 22, self)
+        self.perf_btn = SideButton("⚡", 20, self)
+        self.settings_btn = SideButton("⚙", 22, self)
+        callbacks = {
+            "command": on_command, "notes": on_notes, "lock": on_lock,
+            "perf": on_perf, "settings": on_settings,
+        }
         # Кнопки сверху вниз по именам; спрятать можно любую, кроме настроек
         self.named = {
             "command": self.command_btn, "notes": self.notes_btn, "lock": self.lock_btn,
             "perf": self.perf_btn, "settings": self.settings_btn,
         }
+        for name, btn in self.named.items():
+            layout.addWidget(btn, 0, Qt.AlignmentFlag.AlignHCenter)
+            btn.clicked.connect(lambda _checked=False, f=callbacks[name]: f())
+        self.lock_btn.setToolTip(LOCK_OFF_TEXT)
+
         self.visible = {name: True for name in self.named}
-        self.glyphs = {name: btn.cget("text") for name, btn in self.named.items()}  # символы кнопок: нужны для текстур
-        self.skins = {}   # имя кнопки -> оформление с текстурой (только у тех, кому тема его даёт)
-        self.state = {name: {"active": False, "selected": False, "hover": False} for name in self.named}
-        # Видимые кнопки по порядку: по ним ходят стрелками вверх и вниз
-        self.buttons = list(self.named.values())
-        for btn in self.buttons:
-            btn.configure(corner_radius=theme.SIDEBAR_RADIUS)  # скругление кнопок панели из темы
-            btn.cget("font").configure(family=theme.ICON_FONT)  # значки не зависят от шрифта темы
-            btn.bind("<Enter>", lambda e: sounds.play("hover"), add="+")
+        self.buttons = list(self.named.values())  # видимые кнопки по порядку: по ним ходят стрелками
         self.apply_textures()
 
     def apply_textures(self):
-        """Оформление кнопок из выбранной темы. Если в теме есть texture_button.png, кнопка целиком становится картинкой
-        (значок рисуется на ней). Иначе, если есть sidebar_<имя>.png, значок-картинка лежит на цветной кнопке.
-        Ничего нет: остаётся цветная кнопка со значком-символом."""
+        """Заново подобрать оформление кнопок (при старте и после смены светлой/тёмной темы)."""
         for name, btn in self.named.items():
-            skin = textures.skin(name, self.glyphs[name])
-            if skin is not None:
-                self.skins[name] = skin
-                btn.configure(text="", fg_color="transparent", hover=False, border_width=0)
-                btn.bind("<Enter>", lambda e, n=name: self.set_state(n, hover=True))
-                btn.bind("<Leave>", lambda e, n=name: self.set_state(n, hover=False))
-                self.draw(name)
-                continue
-            image = theme.image("sidebar_" + name, 30)
-            if image is not None:
-                btn.configure(image=image, text="")
-                # CustomTkinter рисует картинку на уже созданной кнопке только при её перерисовке:
-                # без этого значок появляется лишь после первого наведения или нажатия
-                btn.configure(fg_color=btn.cget("fg_color"))
+            btn.apply_texture(name)
+        self.setStyleSheet(f"Sidebar {{ background-color: {theme.color('panel_bg')}; border-radius: 0px; }}")
 
-    def name_of(self, button):
-        return next((name for name, btn in self.named.items() if btn is button), None)
-
-    def set_state(self, name, **changes):
-        """Меняет состояние кнопки (включена, выбрана, под курсором) и перерисовывает её, если у неё текстура."""
-        state = self.state[name]
-        if all(state[key] == value for key, value in changes.items()):
-            return
-        state.update(changes)
-        if name in self.skins:
-            self.draw(name)
-
-    def draw(self, name):
-        """Картинка кнопки с текстурой по её состоянию: включена важнее наведения."""
-        state = self.state[name]
-        kind = "active" if state["active"] else ("hover" if state["hover"] else "normal")
-        btn = self.named[name]
-        btn.configure(image=self.skins[name].image(kind, state["selected"]))
-        btn.configure(fg_color="transparent")  # перерисовка: иначе новая картинка не появится до следующего события
+    def set_width(self, width):
+        self.setFixedWidth(max(width, MIN_WIDTH))
 
     def set_button_visible(self, name, visible):
         """Показать или спрятать кнопку панели: "command", "notes", "lock" или "perf"."""
         self.visible[name] = visible
-        if visible:
-            self.named[name].grid()      # grid() без аргументов возвращает кнопку на её прежнее место
-        else:
-            self.named[name].grid_remove()
+        self.named[name].setVisible(visible)
         self.buttons = [btn for key, btn in self.named.items() if self.visible[key]]
 
     def set_command_visible(self, visible):
         """Кнопка командной строки есть, только пока строка включена."""
         self.set_button_visible("command", visible)
 
+    def _repolish(self, button):
+        style = button.style()
+        style.unpolish(button)
+        style.polish(button)
+        button.update()
+
     def set_button_active(self, button, is_active):
-        """Подсветка кнопки, пока её функция включена (цвет «active» темы или текстура включённого состояния)."""
-        name = self.name_of(button)
-        if name in self.skins:
-            self.set_state(name, active=is_active)
-        elif is_active:
-            button.configure(fg_color=theme.ACTIVE, hover_color=theme.ACTIVE_HOVER)
-        else:
-            button.configure(fg_color=theme.BUTTON, hover_color=theme.BUTTON_HOVER)
+        """Подсветка кнопки, пока её функция включена (цвет «active» темы)."""
+        button.setProperty("active", bool(is_active))
+        button.set_state(active=bool(is_active))
+        self._repolish(button)
 
     def set_perf_active(self, is_active):
-        """Подсветка кнопки производительности."""
         self.set_button_active(self.perf_btn, is_active)
 
     def set_lock_active(self, locked):
         """Подсветка кнопки блокировки и текст её подсказки."""
         self.set_button_active(self.lock_btn, locked)
-        self.lock_tip.text = LOCK_ON_TEXT if locked else LOCK_OFF_TEXT
+        self.lock_btn.setToolTip(LOCK_ON_TEXT if locked else LOCK_OFF_TEXT)
 
     def select(self, index):
-        """Подсвечивает кнопку номер index белой рамкой; None снимает подсветку."""
+        """Рамка выбора вокруг кнопки номер index; None снимает рамку."""
         if index is not None:
             index = min(index, len(self.buttons) - 1)  # кнопок могло стать меньше
+        light = theme.current_mode() == "light"
         for i, btn in enumerate(self.buttons):
-            name = self.name_of(btn)
-            if name in self.skins:
-                self.set_state(name, selected=(i == index))  # у кнопки с текстурой рамка нарисована в самой картинке
+            if btn.skin is not None:
+                btn.set_state(selected=(i == index))  # у кнопки с текстурой рамка нарисована в самой картинке
             elif i == index:
-                light = ctk.get_appearance_mode() == "Light"
-                btn.configure(border_width=4 if light else 3, border_color=theme.SELECT_BORDER)  # на светлой теме толще
+                width = 4 if light else 3  # на светлой теме толще
+                btn.setStyleSheet(f"border: {width}px solid {theme.color('select_border')};")
             else:
-                btn.configure(border_width=0)
+                btn.setStyleSheet("")
 
     def press(self, index):
-        self.buttons[min(index, len(self.buttons) - 1)].invoke()
+        self.buttons[min(index, len(self.buttons) - 1)].click()

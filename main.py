@@ -1,59 +1,106 @@
+# main.py
 """Точка входа. Запуск: python main.py"""
-import ctypes
+
 import os
 import sys
 
+# Убираем переменные Tcl/Tk из окружения (если остались от старой версии)
+for _name in ("TCL_LIBRARY", "TK_LIBRARY"):
+    os.environ.pop(_name, None)
+
+from PySide6.QtWidgets import QApplication
+from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt
+
 from single_instance import SingleInstance
 
-if __name__ == "__main__":
-    
+
+def main():
+    # ── Защита от второго экземпляра ────────────────────────────────────
     instance = SingleInstance()
+
     if "--restart" in sys.argv:
-        # перезапуск из настроек: ждём, пока прежний экземпляр закроется, иначе он сочтёт нас вторым
+        # ждём, пока закроется предыдущий экземпляр (до 3 сек)
         import time
-        for _ in range(30):
+        for _ in range(10):
             if not instance.already_running:
                 break
-            ctypes.windll.kernel32.CloseHandle(ctypes.c_void_p(instance.handle))  # иначе объект не исчезнет
+            instance.close_handle()
             time.sleep(0.3)
             instance = SingleInstance()
+
     if instance.already_running:
-        # лаунчер уже работает: показываем его и выходим
-        # (при автозапуске с --background ничего показывать не нужно)
         if "--background" not in sys.argv:
             instance.signal_existing()
-        sys.exit()
+        sys.exit(0)
 
-    import customtkinter as ctk
-    import i18n
+    # ── Создаём QApplication ─────────────────────────────────────────────
+    # Включаем High DPI (в PySide6 6.4+ это дефолт, но явно не помешает)
+    QApplication.setHighDpiScaleFactorRoundingPolicy(
+        Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+
+    app = QApplication(sys.argv)
+    app.setApplicationName("Aura NOX Launcher")
+    app.setOrganizationName("AuraNOX")
+
+    # Идентификатор для панели задач Windows (иконка окна, а не Python)
+    try:
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            "TileLauncher.App")
+    except (AttributeError, OSError):
+        pass
+
+    # ── Загружаем настройки и язык ───────────────────────────────────────
     import storage
+    import i18n
 
-    # язык задаётся до импорта остальных модулей: часть текстов собирается при импорте
     boot_settings = storage.load_settings()
-    ctk.set_appearance_mode(boot_settings.get("theme_mode", "dark"))
-    if "--background" not in sys.argv:
-        import firstrun
-        if firstrun.needed(boot_settings):  # первый запуск: язык, условия, инструкция
-            firstrun.run(boot_settings)
     i18n.set_language(boot_settings.get("language", i18n.DEFAULT))
 
-    from app import App
-    import keyfix
-    
-    # собственный идентификатор программы: панель задач берёт иконку окна, а не питоновскую
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("TileLauncher.App")
+    # ── Применяем тему (QApplication уже существует) ─────────────────────
+    import theme
+    theme.apply(
+        name=boot_settings.get("theme_name", theme.DEFAULT_NAME),
+        mode=boot_settings.get("theme_mode", "dark"),
+        app=app,
+    )
 
-    ctk.set_appearance_mode("dark")
-    # --background передаёт автозапуск: стартуем сразу спрятанными
-    app = App(start_hidden="--background" in sys.argv)
-    
-    keyfix.install(app)  # Ctrl+V, C, X, A работают и на русской раскладке
-    
-    # сигнал от второго экземпляра приходит из другого потока, поэтому передаём через after
-    instance.listen(lambda: app.after(0, app.show_window))
-        # собранный exe прописывает в окружение пути к своей временной папке (TCL_LIBRARY, TK_LIBRARY);
-    # программы, запущенные плитками, унаследовали бы их и не нашли свои Tcl/Tk
-    for name in ("TCL_LIBRARY", "TK_LIBRARY"):
-        os.environ.pop(name, None)
-    app.mainloop()
-    os._exit(0)  # цикл закончился: завершаем процесс сразу, чтобы не остаться невидимым и не мешать новому запуску
+    # Иконка приложения
+    from config import ICON_PATH
+    if os.path.exists(ICON_PATH):
+        app.setWindowIcon(QIcon(ICON_PATH))
+
+    # ── Первый запуск: язык, условия, инструкция ─────────────────────────
+    if "--background" not in sys.argv:
+        import firstrun
+        if firstrun.needed(boot_settings):
+            firstrun.run(boot_settings)
+            # После мастера язык и terms_seen уже сохранены в файл,
+            # перечитываем чтобы получить выбранный язык
+            boot_settings = storage.load_settings()
+            i18n.set_language(boot_settings.get("language", i18n.DEFAULT))
+            # Переприменяем тему на случай если firstrun изменил settings
+            theme.apply(app=app)
+
+    # ── Инициализируем звуки ─────────────────────────────────────────────
+    import sounds
+    sounds.init(boot_settings)
+
+    # ── Главное окно ─────────────────────────────────────────────────────
+    from app import App
+    window = App(settings=boot_settings,
+                 start_hidden="--background" in sys.argv)
+
+    # Сигнал от второго экземпляра → показать окно
+    instance.listen(lambda: window.show_window_from_signal())
+
+    # ── Запуск цикла событий ─────────────────────────────────────────────
+    exit_code = app.exec()
+
+    # Гарантированно завершаем процесс
+    os._exit(exit_code)
+
+
+if __name__ == "__main__":
+    main()

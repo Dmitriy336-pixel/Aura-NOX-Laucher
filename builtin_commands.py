@@ -9,6 +9,7 @@ import calc
 import firstrun
 import user_commands
 import winapi
+from config import SCREENSHOT_DELAY_MS
 from notes_store import NoteStore, default_dir
 from commands import CommandRegistry, Paged, Reply
 import i18n
@@ -29,10 +30,10 @@ def short(text, limit=60):
 def build_registry(app):
     reg = CommandRegistry()
 
-    def later(action):
+    def later(action, delay=50):
         """Обработчик, который запускает действие чуть позже: строка успевает закрыться раньше."""
         def handler(args):
-            app.after(50, action)  # возвращаем None, значит, строка закроется
+            app.after(delay, action)  # возвращаем None, значит, строка закроется
         return handler
 
     # --- помощь и команды самого лаунчера ---
@@ -243,7 +244,7 @@ def build_registry(app):
     reg.add(["записать", "jot", "зам"], tr("быстрая заметка: записать купить хлеб"), jot_cmd)
     reg.add(["поиск", "search", "g"], tr("поиск в интернете: поиск погода"), search_cmd)
     reg.add(["скрин", "shot", "screenshot"], tr("снимок экрана (вырезка, Win+Shift+S)"),
-            later(lambda: winapi.send_combo("win", "shift", "s")))
+            later(lambda: winapi.send_combo("win", "shift", "s"), SCREENSHOT_DELAY_MS))  # дольше: размытие должно успеть пропасть
     reg.add(["счёт", "счет", "calc"], tr("калькулятор: счёт 2+2*3"), calc_cmd)
 
     # свои команды пользователя подключаем последними; их имена не должны совпадать со встроенными

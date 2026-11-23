@@ -160,3 +160,54 @@ def focus_window(hwnd):
         u.ShowWindow(hwnd, SW_RESTORE)  # свёрнутое окно сначала разворачиваем
     send_combo("alt")  # короткое нажатие Alt снимает запрет Windows на передачу фокуса
     u.SetForegroundWindow(hwnd)
+
+
+# --- экранная клавиатура и фокус ---
+KEYBOARD_CLASS = "OSKMainClass"  # класс окна экранной клавиатуры Windows (osk.exe)
+
+
+def foreground_class():
+    """Класс окна, которое сейчас на переднем плане (пустая строка, если узнать не вышло)."""
+    u = ctypes.windll.user32
+    u.GetForegroundWindow.restype = wintypes.HWND
+    u.GetClassNameW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
+    hwnd = u.GetForegroundWindow()
+    if not hwnd:
+        return ""
+    buf = ctypes.create_unicode_buffer(256)
+    u.GetClassNameW(hwnd, buf, 256)
+    return buf.value
+
+
+def open_keyboard():
+    """Показать экранную клавиатуру Windows."""
+    ctypes.windll.shell32.ShellExecuteW(None, "open", "osk.exe", None, None, 1)
+
+
+class _MonitorInfo(ctypes.Structure):
+    _fields_ = [("cbSize", wintypes.DWORD), ("rcMonitor", wintypes.RECT),
+                ("rcWork", wintypes.RECT), ("dwFlags", wintypes.DWORD)]
+
+
+def window_top_gap(class_name):
+    """Сколько физических пикселей от верхнего края видимого окна этого класса до нижнего края его монитора.
+    None, если такого окна нет."""
+    u = ctypes.windll.user32
+    u.FindWindowW.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR]
+    u.FindWindowW.restype = wintypes.HWND
+    u.IsWindowVisible.argtypes = [wintypes.HWND]
+    u.GetWindowRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+    u.MonitorFromWindow.argtypes = [wintypes.HWND, wintypes.DWORD]
+    u.MonitorFromWindow.restype = wintypes.HANDLE
+    u.GetMonitorInfoW.argtypes = [wintypes.HANDLE, ctypes.POINTER(_MonitorInfo)]
+    hwnd = u.FindWindowW(class_name, None)
+    if not hwnd or not u.IsWindowVisible(hwnd):
+        return None
+    rect = wintypes.RECT()
+    if not u.GetWindowRect(hwnd, ctypes.byref(rect)):
+        return None
+    info = _MonitorInfo()
+    info.cbSize = ctypes.sizeof(info)
+    if not u.GetMonitorInfoW(u.MonitorFromWindow(hwnd, 2), ctypes.byref(info)):  # 2: ближайший монитор
+        return None
+    return max(0, info.rcMonitor.bottom - rect.top)

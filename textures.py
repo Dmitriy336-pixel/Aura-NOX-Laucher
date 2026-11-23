@@ -6,7 +6,6 @@
   texture_active.png        включённая функция (нет файла: та же текстура, подкрашенная цветом «active» темы)
 Значок берётся из sidebar_<имя>.png темы, а если его нет, рисуется символ кнопки шрифтом значков темы.
 Рамка выбора кнопки (стрелками с клавиатуры) тоже «запекается» в картинку, потому что обычная рамка кнопки под картинкой не видна."""
-import customtkinter as ctk
 from PIL import Image, ImageDraw, ImageEnhance, ImageFont
 
 import theme
@@ -88,14 +87,14 @@ def _state_texture(kind, mode, textures, size):
         lighter.putalpha(base.getchannel("A"))  # прозрачность текстуры не трогаем
         return lighter
     if kind == "active":
-        tint = Image.new("RGB", base.size, _rgb(theme.ACTIVE[mode]))
+        tint = Image.new("RGB", base.size, _rgb(theme.pair("active")[mode]))
         tinted = Image.blend(base.convert("RGB"), tint, ACTIVE_BLEND)
         tinted.putalpha(base.getchannel("A"))
         return tinted
     return base
 
 
-def compose(kind, mode, textures, glyph, icon, size, selected):
+def compose(kind, mode, textures, glyph, icon, size, selected, ratio=1):
     """Одна картинка кнопки: текстура состояния, значок и рамка выбора. mode: 0 светлая, 1 тёмная.
     Возвращает None, если значок нарисовать нечем (нет ни картинки значка, ни подходящего шрифта)."""
     big = size * SCALE
@@ -108,12 +107,12 @@ def compose(kind, mode, textures, glyph, icon, size, selected):
         font = load_font(theme.ICON_FONT, int(big * GLYPH_FILL))
         if font is None:
             return None
-        ImageDraw.Draw(canvas).text((big // 2, big // 2), glyph, font=font, fill=_rgb(theme.BUTTON_TEXT[mode]) + (255,), anchor="mm")
-    radius = min(theme.SIDEBAR_RADIUS, size // 2) * SCALE
+        ImageDraw.Draw(canvas).text((big // 2, big // 2), glyph, font=font, fill=_rgb(theme.pair("button_text")[mode]) + (255,), anchor="mm")
+    radius = min(theme.shape("sidebar_radius") * ratio, size // 2) * SCALE
     if selected:
-        width = (4 if mode == 0 else 3) * SCALE  # как у обычной рамки выбора: на светлой теме толще
+        width = (4 if mode == 0 else 3) * ratio * SCALE  # как у обычной рамки выбора: на светлой теме толще
         ImageDraw.Draw(canvas).rounded_rectangle(
-            [0, 0, big - 1, big - 1], radius=radius, outline=_rgb(theme.SELECT_BORDER[mode]) + (255,), width=width)
+            [0, 0, big - 1, big - 1], radius=radius, outline=_rgb(theme.pair("select_border")[mode]) + (255,), width=width)
     mask = Image.new("L", (big, big), 0)
     ImageDraw.Draw(mask).rounded_rectangle([0, 0, big - 1, big - 1], radius=radius, fill=255)
     canvas.putalpha(Image.composite(canvas.getchannel("A"), Image.new("L", (big, big), 0), mask))
@@ -125,15 +124,17 @@ class Skin:
 
     def __init__(self, textures, glyph, icon, size):
         self.textures, self.glyph, self.icon, self.size = textures, glyph, icon, size
-        self.shown = max(8, size - 2 * theme.TEXTURE_INSET)  # отступ от края, если края текстуры обрезаются
+        self.shown = max(8, size - 2 * theme.shape("texture_inset"))  # отступ от края, если края текстуры обрезаются
         self._cache = {}
 
     def image(self, kind, selected):
-        key = (kind, bool(selected))
+        """QPixmap кнопки для текущей темы (светлой или тёмной), с учётом устройства с высокой плотностью пикселей."""
+        mode = 0 if theme.current_mode() == "light" else 1
+        key = (kind, bool(selected), mode)
         if key not in self._cache:
-            light = compose(kind, 0, self.textures, self.glyph, self.icon[0] if self.icon else None, self.shown, selected)
-            dark = compose(kind, 1, self.textures, self.glyph, self.icon[1] if self.icon else None, self.shown, selected)
-            self._cache[key] = ctk.CTkImage(light_image=light, dark_image=dark, size=(self.shown, self.shown))
+            icon = self.icon[mode] if self.icon else None
+            picture = compose(kind, mode, self.textures, self.glyph, icon, self.shown * 2, selected, 2)  # в 2 раза крупнее: чётко на экранах с масштабом
+            self._cache[key] = theme.pil_to_pixmap(picture) if picture is not None else None
         return self._cache[key]
 
 

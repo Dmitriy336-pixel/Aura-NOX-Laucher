@@ -376,16 +376,3 @@ def auto_click(pressed_at):
         play("click")
     else:
         _debug("общий click не нужен: звук уже был")
-
-
-def hook_messagebox():
-    """Окна с ошибкой и предупреждением начинаются со звука error."""
-    from tkinter import messagebox
-
-    def wrap(original):
-        def shown(*args, **kwargs):
-            play("error")
-            return original(*args, **kwargs)
-        return shown
-    messagebox.showerror = wrap(messagebox.showerror)
-    messagebox.showwarning = wrap(messagebox.showwarning)

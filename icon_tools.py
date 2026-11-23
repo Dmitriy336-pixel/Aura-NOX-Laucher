@@ -11,19 +11,14 @@ import uuid
 import subprocess
 from ctypes import wintypes
 
-import customtkinter as ctk
-from tkinter import messagebox
 from PIL import Image
 
-import theme
 import tile_icons
 from config import BASE_DIR, ICONS_DIR
-from i18n import tr
 
 ICON_PACK_DIR = os.path.join(BASE_DIR, "icon_pack")  # сюда кладут готовые иконки популярных программ
 PACK_EXTS = (".png", ".ico", ".webp", ".jpg", ".jpeg", ".bmp")
 IS_WINDOWS = sys.platform == "win32"
-DIM = theme.DIM
 NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
 
@@ -278,39 +273,3 @@ def auto_icon(tile):
         except OSError:
             return None
     return None
-
-
-# ---------------------------------------------------------------- блок в настройках
-class IconsPage(ctk.CTkFrame):
-    """Блок «Иконки плиток» в настройках: подобрать иконки уже добавленным плиткам, открыть папку готовых иконок."""
-
-    def __init__(self, master, app):
-        super().__init__(master, fg_color="transparent")
-        self.app = app
-        ctk.CTkLabel(
-            self, anchor="w", justify="left", wraplength=480, text_color=DIM,
-            text=tr("Иконка подбирается так: сначала из папки готовых иконок, потом из самой программы. "
-                 "Готовая иконка это файл с именем программы: obs.png подойдёт к obs64.exe. "
-                 "Одной плитке можно подобрать иконку правым кликом: «Подобрать иконку»."),
-        ).pack(fill="x", padx=8, pady=(0, 8))
-        row = ctk.CTkFrame(self, fg_color="transparent")
-        row.pack(anchor="w", padx=8)
-        ctk.CTkButton(row, text=tr("Подобрать плиткам без иконки"), width=220, command=self.fill).pack(side="left", padx=(0, 8))
-        ctk.CTkButton(row, text=tr("Папка готовых иконок"), width=170, command=self.open_pack).pack(side="left")
-        self.result = ctk.CTkLabel(self, text="", anchor="w", text_color=DIM)
-        self.result.pack(fill="x", padx=10, pady=(6, 0))
-
-    def fill(self):
-        done, total = self.app.fill_missing_icons()
-        if total == 0:
-            self.result.configure(text=tr("У всех плиток уже есть иконки."))
-        else:
-            self.result.configure(text=tr('Подобрано иконок: {done} из {total}.', done=done, total=total))
-
-    def open_pack(self):
-        try:
-            os.makedirs(ICON_PACK_DIR, exist_ok=True)
-            os.startfile(ICON_PACK_DIR)  # только Windows
-        except (OSError, AttributeError) as e:
-            messagebox.showerror(tr("Иконки"), tr('Не удалось открыть папку:\n{ICON_PACK_DIR}\n\n{e}', ICON_PACK_DIR=ICON_PACK_DIR, e=e),
-                                 parent=self.winfo_toplevel())

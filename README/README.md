@@ -2,16 +2,18 @@
 
 [Русский](README.ru.md) · [Українська](README.uk.md)
 
-A Windows launcher written in Python and CustomTkinter: a window of program tiles, a sidebar with quick buttons, a command bar, notes, visual themes and event sounds. It works with keyboard and mouse, can live in the background and be summoned with a hotkey.
+A Windows launcher written in Python and PySide6 (Qt): a window of program tiles, a sidebar with quick buttons, a command bar, notes, visual themes and event sounds. It works with keyboard and mouse, can live in the background and be summoned with a hotkey.
 
 ## Features
 
 - **Tiles.** Any program, shortcut or `.bat` file becomes a tile. Tiles can be rearranged with the mouse or keyboard, recolored and given custom icons. Icons are picked automatically from the `icon_pack` folder, from the program itself or from a shortcut.
 - **Tile hotkeys.** Every tile has its own key (digits and letters, on any keyboard layout). Pressing it launches the tile at once.
 - **Sidebar.** Buttons for settings, the command bar, notes, drag lock and high-performance mode. Unneeded buttons can be hidden.
-- **Command bar.** Opens from any program with a global hotkey. It has built-in commands and your own, folder and file navigation, favorite folders, quick notes and a command history (see below).
+- **Command bar.** Opens from any program with a global hotkey. It has built-in commands and your own, folder and file navigation, favorite folders, quick notes and a command history (see below). While the bar is open, the screen behind it is blurred and dimmed (configurable, can be turned off).
+- **Program search.** The tile with a magnifier (or the “+” itself, depending on a setting) finds a program by name among Start menu and desktop shortcuts and programs registered in Windows; if nothing is found, you can search the disk or pick a file by hand.
 - **Three languages.** Russian, English, Ukrainian. The language is chosen on first launch and can be changed in the settings.
-- **Notes.** Plain `.md` files in a separate folder, with search by title and text, pinning and autosave.
+- **Notes.** Plain `.md` files in a separate folder, with tabs, live Markdown styling, a formatting toolbar, search by title and text, pinning and autosave.
+- **Settings search.** The search field in the settings window finds the item you need and scrolls to it.
 - **Themes.** Colors, corner radii, fonts, images and button textures, light and dark mode.
 - **Sounds.** A sound for each event, a global volume and an on/off switch.
 - **Background mode.** The launcher hides completely and returns on a hotkey. Optional autostart with Windows.
@@ -22,10 +24,10 @@ A Windows launcher written in Python and CustomTkinter: a window of program tile
 
 - Windows 10 or 11 (the program uses WinAPI calls).
 - Python 3.13 (the version it has been run on).
-- Packages: `customtkinter`, `Pillow`.
+- Packages: `PySide6`, `Pillow`.
 
 ```
-pip install customtkinter pillow
+pip install PySide6 pillow
 ```
 
 ## Running
@@ -41,10 +43,10 @@ The `--background` flag starts the launcher hidden (autostart uses it).
 ### Main window
 
 | Keys | Action |
-| --- | --- |
+|---|---|
 | Arrow keys | select a tile; on the sidebar, up and down pick a button, left returns to the tiles |
 | Tab | move the selection between the tiles and the sidebar |
-| Enter | launch the tile or press the sidebar button |
+| Enter | launch the tile, add a program on “+” (or open the search on the magnifier) or press the sidebar button |
 | Tile key | launch the tile immediately |
 | Delete | menu of the selected tile (delete, color, icon) |
 | Right click | the same menu for the tile under the cursor |
@@ -60,19 +62,19 @@ Dragging can be locked with the ⇅ button on the sidebar.
 They work from any program. All three can be changed in the settings.
 
 | Default | Action |
-| --- | --- |
+|---|---|
 | Ctrl+Alt+Space | show or hide the launcher (background mode) |
 | Ctrl+Alt+T | command bar |
 | Ctrl+Alt+N | notes |
 
 ### Command bar
 
-Tab inserts the selected suggestion, up and down arrows choose a suggestion, Enter runs the command, PgUp and PgDn page through long answers and suggestion pages, Esc closes the bar. With an empty field the up arrow recalls earlier commands (the last 50, kept between launches) and the down arrow goes back to newer ones. The `help` command lists all commands. In the English and Ukrainian interface commands are shown by their English names; the Russian names work in every language.
+Tab inserts the selected suggestion, up and down arrows choose a suggestion, Enter runs the command, PgUp and PgDn page through long answers and suggestion pages, Esc closes the bar. With an empty field the up arrow recalls earlier commands (the last 50, kept between launches) and the down arrow goes back to newer ones. The `help` command lists all commands. Background blur is configured in Settings, Appearance, Additional settings, Background blur (strength, dimming, fade-in; in the light theme the background is lightened instead); a click on the blurred background closes the bar. In the English and Ukrainian interface commands are shown by their English names; the Russian names work in every language.
 
 Built-in commands (each has Russian and English names; the table shows both):
 
 | Command | What it does |
-| --- | --- |
+|---|---|
 | `помощь` / `help` | list of commands |
 | `настройки` / `settings`, `скрыть` / `hide`, `выход` / `exit` | control the launcher itself |
 | `рб` / `desk` | virtual desktops: `рб 2` switch, `рб +` new, `рб -` close |
@@ -106,7 +108,7 @@ Type `folder downloads\` and the suggestions show what is inside: Tab steps into
 A space after a complete path shows the actions available for it:
 
 | Action | What it does |
-| --- | --- |
+|---|---|
 | `open` | open in Explorer (run a file) |
 | `term` | a terminal in this folder |
 | `code` | open in VS Code |
@@ -137,6 +139,9 @@ A string with no translation is shown in Russian, so nothing breaks.
 
 Each note is a file `<title>.md` in a shared folder, by default `Documents\SharedNotes`. The folder can be changed in Settings, under "Заметки" (Notes). Because of this format, notes can be read and written by other programs too: the window checks the folder every couple of seconds and picks up outside changes. If a file is changed outside while you are editing it, your version is saved separately with a "conflict" mark, so nothing is lost.
 
+- notes open in tabs (the × button closes a tab), and a side panel can show note details: words, characters, lines, modification date;
+- the text stays plain Markdown but looks styled: large headings (`#`), **bold**, *italic*, `code`, ~~strikethrough~~, underlined links, quotes; `- [ ]` checkboxes toggle with a click, Enter continues a list, Ctrl+click opens a link;
+- a formatting toolbar: headings 1–3, bold (Ctrl+B), italic (Ctrl+I), lists, checkbox, link (Ctrl+K);
 - search covers both titles and text;
 - pinning: the "★ Закрепить" button or Ctrl+P; pinned notes come first (the list of pinned notes is kept in `.pins.json` inside the notes folder);
 - Ctrl+N creates a new note, Ctrl+S saves immediately (otherwise it saves by itself);
@@ -156,7 +161,7 @@ Pick a theme in Settings, under "Темы" (Themes): theme cards, an "Add theme"
 Put `.wav` or `.mp3` files into the `sounds` folder next to the program (it is created automatically) and name them after the event. Case does not matter. No file means no sound for that event. Switch and volume: Settings, "Общие" (General), "Звуки" (Sounds).
 
 | File | Plays when |
-| --- | --- |
+|---|---|
 | `launch` | a tile is launched |
 | `error` | an error (a tile did not launch, a command failed) |
 | `tile_add` | a tile is added |
@@ -218,7 +223,7 @@ The sidebar button (or the `производительность` command) switc
 Data lives next to the program (next to the `exe` in the built version) and survives restarts.
 
 | What | Where |
-| --- | --- |
+|---|---|
 | Tiles | `tiles.json` |
 | Settings | `settings.json` |
 | Your commands | `commands.json` |
@@ -235,23 +240,26 @@ Data files are written through a temporary file, so closing the program mid-writ
 ## Project structure
 
 | File | Purpose |
-| --- | --- |
+|---|---|
 | `main.py` | entry point, single-instance guard |
 | `app.py` | main window: assembles the parts and decides what to do on actions |
 | `config.py` | paths, sizes, default settings |
 | `storage.py` | loading and saving tiles and settings |
 | `tile_grid.py`, `tile_icons.py`, `icon_tools.py` | tile grid, icons |
 | `sidebar.py`, `textures.py` | sidebar and its button textures |
+| `screen_blur.py` | blurred background behind the command bar |
+| `add_program.py`, `programs.py` | the “Add a program” window and the search for installed programs |
 | `theme.py`, `theme_page.py` | themes |
 | `command_bar.py`, `commands.py`, `builtin_commands.py`, `user_commands.py`, `calc.py` | command bar |
 | `path_nav.py` | the `folder` command: folder and file navigation, favorites |
-| `notes_window.py`, `notes_store.py`, `notes_settings.py` | notes |
+| `notes_window.py`, `notes_store.py`, `notes_settings.py`, `md_edit.py` | notes and the Markdown-styled editor |
 | `settings_window.py`, `settings_data.py`, `controls_page.py`, `commands_page.py`, `color_picker.py`, `hotkey_capture.py` | settings window |
 | `hotkey.py`, `keyfix.py` | global hotkeys, clipboard shortcuts on any layout |
 | `sounds.py` | event sounds |
 | `i18n.py`, `lang_en.py`, `lang_uk.py` | languages: the `tr()` function and translation tables |
 | `legal.py`, `firstrun.py` | terms of use, first-launch window |
 | `about_page.py`, `faq_page.py`, `faq_data.py` | "About" and "FAQ" tabs |
+| `ui_kit.py`, `dialogs.py` | shared Qt interface widgets and dialogs |
 | `autostart.py`, `powerplan.py`, `winapi.py`, `single_instance.py`, `launchers.py` | Windows integration |
 
 ### Adding a language
@@ -269,15 +277,15 @@ pip install pyinstaller
 pyinstaller main.spec
 ```
 
-The finished program appears in `dist\Aura NOX Launcher\` (a folder build rather than a single exe: antivirus programs complain about it less). Data files will live next to `Aura NOX Launcher.exe`, and the `themes`, `sounds` and `icon_pack` folders must be copied there so that themes, sounds and ready-made icons work.
+The finished program appears in `dist\Aura NOX Launcher\` (a folder build rather than a single exe: antivirus programs complain about it less; Qt makes the folder noticeably larger than it was with CustomTkinter). Data files will live next to `Aura NOX Launcher.exe`, and the `themes`, `sounds` and `icon_pack` folders must be copied there so that themes, sounds and ready-made icons work.
 
 ## Official sources
 
 The original program can be downloaded only from these places:
 
-- **GitHub:** https://github.com/Dmitriy336-pixel
-- **Telegram:** https://t.me/Aura\_NOX\_Laucher\_Official
-- **YouTube:** https://www.youtube.com/@Aura\_NOX\_Official
+- **GitHub:** https://github.com/Dmitriy336-pixel/Aura-NOX-Laucher
+- **Telegram:** [channel link]
+- **YouTube:** [channel link]
 
 Anything called "Aura NOX Launcher" that did not come from these places is not from the author. The author is not responsible for such versions or for any code added to them (see the terms of use in the program).
 
@@ -285,7 +293,7 @@ Anything called "Aura NOX Launcher" that did not come from these places is not f
 
 Interface sound effects: **Universal UI Soundpack** by Nathan Gibson ([author's site](https://nathangibson.myportfolio.com)), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). If you modified the sounds (trimmed them, changed the volume), the license requires you to say so.
 
-The program also uses Python, CustomTkinter (MIT) and Pillow (HPND). The same is listed on the "About" tab.
+The program also uses Python, PySide6 / Qt (LGPL v3) and Pillow (HPND). The same is listed on the "About" tab.
 
 ## Troubleshooting
 

@@ -1,10 +1,12 @@
-"""Кликабельные ссылки в тексте: в текстовых полях (условия) и в подписях («О программе»).
+"""Кликабельные ссылки в тексте: в текстовых полях (условия) и в подписях («О программе») на PySide6.
 Адрес вида http(s)://... находится в тексте сам и открывается в браузере по умолчанию."""
+import html
 import re
-import tkinter as tk
 import webbrowser
 
-import customtkinter as ctk
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtGui import QDesktopServices
+from PySide6.QtWidgets import QLabel, QTextBrowser
 
 URL = re.compile(r"https?://\S+")
 TRAILING = ".,;:!?)]}»\"'"   # знаки после адреса к нему не относятся: «(https://site.com).»
@@ -33,41 +35,46 @@ def split(text):
     return parts
 
 
+def to_html(text):
+    """Обычный текст -> HTML: переносы строк сохраняются, адреса становятся ссылками."""
+    out = []
+    for piece, url in split(text):
+        if url is None:
+            out.append(html.escape(piece).replace("\n", "<br>"))
+        else:
+            safe = html.escape(url, quote=True)
+            out.append(f'<a href="{safe}" style="color:{LINK_COLOR}">{safe}</a>')
+    return "".join(out)
+
+
+def make_browser(parent=None):
+    """Текстовое поле только для чтения; ссылки открываются в браузере."""
+    box = QTextBrowser(parent)
+    box.setOpenLinks(False)
+    box.anchorClicked.connect(lambda url: open_url(url.toString()))
+    return box
+
+
 def fill_text(box, text):
-    """Кладёт текст в CTkTextbox (его можно сделать только для чтения) с кликабельными адресами."""
-    inner = box._textbox
-    inner.configure(state="normal")
-    inner.delete("1.0", "end")
-    for number, (piece, url) in enumerate(split(text)):
-        if url is None:
-            inner.insert("end", piece)
-            continue
-        tag = f"link{number}"
-        inner.insert("end", piece, (tag,))
-        inner.tag_configure(tag, foreground=LINK_COLOR, underline=True)
-        inner.tag_bind(tag, "<Button-1>", lambda e, u=url: open_url(u))
-        inner.tag_bind(tag, "<Enter>", lambda e: inner.configure(cursor="hand2"))
-        inner.tag_bind(tag, "<Leave>", lambda e: inner.configure(cursor=""))
-    inner.configure(state="disabled")
+    """Кладёт текст в QTextBrowser (только чтение) с кликабельными адресами."""
+    if not isinstance(box, QTextBrowser):
+        raise TypeError("fill_text ожидает QTextBrowser (см. links.make_browser)")
+    box.setHtml(f'<div style="white-space: pre-wrap">{to_html(text)}</div>')
 
 
-def linked_label(master, text, text_color=None, wraplength=420, **kwargs):
-    """Подпись, где адреса кликабельны. Без адресов это обычный CTkLabel."""
-    parts = split(text)
-    if all(url is None for _piece, url in parts):
-        return ctk.CTkLabel(master, text=text, text_color=text_color, anchor="w", justify="left",
-                            wraplength=wraplength, **kwargs)
-    row = ctk.CTkFrame(master, fg_color="transparent")
-    for piece, url in parts:
-        if url is None:
-            ctk.CTkLabel(row, text=piece, text_color=text_color, anchor="w", **kwargs).pack(side="left")
-            continue
-        label = ctk.CTkLabel(row, text=url, text_color=LINK_COLOR, anchor="w",
-                             font=ctk.CTkFont(underline=True), **kwargs)
-        label.pack(side="left")
-        try:
-            label._label.configure(cursor="hand2")  # рука над ссылкой
-        except (AttributeError, tk.TclError):
-            pass
-        label.bind("<Button-1>", lambda e, u=url: open_url(u))
-    return row
+def linked_label(text, color=None, wraplength=420, parent=None):
+    """Подпись, где адреса кликабельны. Без адресов это обычный QLabel."""
+    label = QLabel(parent)
+    label.setWordWrap(True)
+    label.setMaximumWidth(wraplength)
+    if color:
+        label.setStyleSheet(f"color: {color};")
+    if all(url is None for _piece, url in split(text)):
+        label.setText(text)
+        return label
+    label.setTextFormat(Qt.TextFormat.RichText)
+    label.setText(to_html(text))
+    label.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+    label.setOpenExternalLinks(False)
+    label.linkActivated.connect(open_url)
+    return label

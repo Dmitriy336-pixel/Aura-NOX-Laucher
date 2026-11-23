@@ -86,7 +86,7 @@ TERMS = {
 Плитки, настройки и заметки хранятся только на вашем компьютере. Программа сама ничего не отправляет в интернет и ничего не собирает. Команды, которые открывают сайты (например, поиск), открывают их в вашем браузере по вашему запросу.
 
 8. Сторонние компоненты
-Программа использует Python, CustomTkinter и Pillow, у которых свои лицензии. Темы, звуки и иконки, которые вы добавляете, остаются собственностью их авторов.
+Программа использует Python, PySide6 (Qt) и Pillow, у которых свои лицензии. Темы, звуки и иконки, которые вы добавляете, остаются собственностью их авторов.
 
 Copyright (c) 2026 {author}""",
     "en": """{app} is free software. Please read these terms before using it. If you do not agree with them, do not use the program.
@@ -113,7 +113,7 @@ The launcher starts programs and runs commands that you set up yourself: tiles a
 Tiles, settings and notes are stored only on your computer. The program does not send anything to the internet and does not collect anything. Commands that open websites (for example, search) open them in your browser at your request.
 
 8. Third-party components
-The program uses Python, CustomTkinter and Pillow, which have their own licenses. Themes, sounds and icons that you add remain the property of their authors.
+The program uses Python, PySide6 (Qt) and Pillow, which have their own licenses. Themes, sounds and icons that you add remain the property of their authors.
 
 Copyright (c) 2026 {author}""",
 }
@@ -138,11 +138,11 @@ TERMS["uk"] = """{app}: безкоштовна програма. Прочита�
 6. Ваші дії
 Лаунчер запускає програми та виконує команди, які ви задали самі: плитки й власні команди, зокрема команди Windows. Відповідальність за те, що ви запускаєте, лежить на вас.
 
-7. Ваши дані
+7. Ващі дані
 Плитки, налаштування та нотатки зберігаються лише на вашому комп'ютері. Програма сама нічого не надсилає в інтернет і нічого не збирає. Команди, що відкривають сайти (наприклад, пошук), відкривають їх у вашому браузері на ваш запит.
 
-8. Сторонні компоненты
-Програма використовує Python, CustomTkinter і Pillow, які мають власні ліцензії. Теми, звуки та іконки, які ви додаєте, залишаються власністю їхніх авторів.
+8. Сторонні компоненти
+Програма використовує Python, PySide6 (Qt) і Pillow, які мають власні ліцензії. Теми, звуки та іконки, які ви додаєте, залишаються власністю їхніх авторів.
 
 Copyright (c) 2026 {author}"""
 
@@ -176,7 +176,7 @@ GUIDE = {
 
 
 GUIDE["uk"] = [
-    ("Плитка «+»", "додати програму: виберіть файл .exe, ярлык або .bat"),
+    ("Плитка «+»", "додати програму: виберіть файл .exe, ярлик або .bat"),
     ("Клік або клавіша", "запустити плитку; швидка клавіша написана на самій плитці"),
     ("Стрілки, Tab, Enter", "вибір плитки з клавіатури; Tab переносить вибір на праву панель; Enter запускає"),
     ("Правий клік або Delete", "меню плитки: видалити, колір, іконка"),

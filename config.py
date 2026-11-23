@@ -1,80 +1,83 @@
-"""Все настройки в одном месте. Меняешь число здесь, и оно меняется везде."""
+# config.py
+"""Все пути, размеры и настройки по умолчанию. Не зависит от GUI-фреймворка."""
+
 import os
 import sys
 
-VERSION = "1.0.0"  # версия программы: показывается в «О программе»
+VERSION = "2.0.0"
 
-FROZEN = getattr(sys, "frozen", False)  # True, когда запущен собранный exe
+FROZEN = getattr(sys, "frozen", False)
 
-# Данные пользователя (плитки, настройки) лежат рядом с exe и переживают перезапуски
-BASE_DIR = os.path.dirname(sys.executable) if FROZEN else os.path.dirname(os.path.abspath(__file__))
-# Файлы, упакованные внутрь exe (иконка, текстуры): при запуске распаковываются во временную папку
+BASE_DIR = (os.path.dirname(sys.executable) if FROZEN
+            else os.path.dirname(os.path.abspath(__file__)))
 RESOURCE_DIR = getattr(sys, "_MEIPASS", BASE_DIR)
 
-DATA_FILE = os.path.join(BASE_DIR, "tiles.json")
+DATA_FILE     = os.path.join(BASE_DIR, "tiles.json")
+SETTINGS_FILE = os.path.join(BASE_DIR, "settings.json")
+USER_COMMANDS_FILE = os.path.join(BASE_DIR, "commands.json")
+FAVORITES_FILE     = os.path.join(BASE_DIR, "favorites.json")
+HISTORY_FILE       = os.path.join(BASE_DIR, "history.json")
+SCREENSHOT_DELAY_MS = 250  # пауза между закрытием строки (и размытия) и запуском вырезки экрана, иначе вырезка снимет размытие
+ICONS_DIR          = os.path.join(BASE_DIR, "icons")
 
 # Окно
-WINDOW_SCALE = 0.8     # окно открывается в 80% от экрана
-SIDEBAR_WIDTH = 64     # ширина правой панели в пикселях
+WINDOW_SCALE = 0.8
+SIDEBAR_WIDTH = 64
 
 # Сетка плиток
-COLUMNS = 5            # плиток в строке
-GAP = 8                # отступ вокруг плитки
-MAX_TILE_SIZE = 120    # плитки растут вместе с окном, но не крупнее этого
+COLUMNS      = 5
+GAP          = 8
+MAX_TILE_SIZE = 120
 
-# Цвета плиток по кругу
+# Цвета плиток по кругу (дефолт; тема может переопределить)
 COLORS = ["#2d6a4f", "#1d4e89", "#7b2d26", "#5a3e85", "#8a5a00", "#006466"]
-# Палитра в окне выбора цвета плитки (первые шесть совпадают с цветами по кругу)
-TILE_PALETTE = COLORS + ["#c0392b", "#d35400", "#f1c40f", "#27ae60", "#2980b9", "#8e44ad", "#34495e", "#7f8c8d"]
-# Быстрые клавиши плиток: выдаются по порядку при добавлении плитки
+
+TILE_PALETTE = COLORS + [
+    "#c0392b", "#d35400", "#f1c40f", "#27ae60",
+    "#2980b9", "#8e44ad", "#34495e", "#7f8c8d",
+]
+
 QUICK_KEYS = "123456789qwertyuiopasdfghjklzxcvbnm"
 
-# Файл с настройками и значения по умолчанию
-SETTINGS_FILE = os.path.join(BASE_DIR, "settings.json")
-DEFAULT_SETTINGS = {
-    "autostart": False,
-    "background_mode": False,
-    "after_launch": "minimize",
-    "columns": COLUMNS,                    # плиток в строке
-    "max_tile_size": MAX_TILE_SIZE,        # максимальный размер плитки, px
-    "sidebar_width": SIDEBAR_WIDTH,        # ширина правой панели, px
-    "window_scale": int(WINDOW_SCALE * 100),  # размер окна при запуске, % от экрана
-    "command_line": True,                  # командная строка включена
-    "hotkey_summon": "ctrl+alt+space",     # вызов лаунчера из фонового режима
-    "hotkey_command": "ctrl+alt+t",        # вызов командной строки из любой программы
-    "hotkey_notes": "ctrl+alt+n",          # открыть заметки из любой программы
-    "notes_hotkey": True,                  # включена ли эта горячая клавиша
-    "notes_font_size": 14,                 # размер шрифта в заметках
-    "notes_autosave_ms": 700,              # через сколько мс после правки заметка сохраняется
-    "notes_sort": "date",                  # порядок в списке: date (новые сверху) или name (по алфавиту)
-    "tile_icon_size": 60,                  # размер иконки на плитке, % от размера плитки
-    "tile_label": "inside",                # где название плитки: inside (на плитке), below (под плиткой), hover (при наведении)
-    "tile_show_key": True,                 # показывать быструю клавишу на плитке
-    "confirm_delete": True,                # спрашивать подтверждение перед удалением плитки
-    "theme_mode": "dark",                  # оформление: dark / light / system (как в Windows)
-    "theme_name": "default",               # папка темы в themes
-    "auto_icons": True,                    # подбирать иконку при добавлении программы
-    "show_notes_btn": True,                # показывать кнопку заметок на правой панели
-    "show_lock_btn": True,                 # показывать кнопку блокировки перетаскивания
-    "show_perf_btn": True,                 # показывать кнопку режима производительности
-    "language": "ru",                      # язык интерфейса: ru или en (включается перезапуском)
-    "terms_seen": "",                      # версия условий использования, показанных при первом запуске
-    "sounds_enabled": True,                # звуки событий (файлы лежат в папке sounds)
-    "sound_volume": 70,                    # громкость звуков, %
-}
-
-USER_COMMANDS_FILE = os.path.join(BASE_DIR, "commands.json")  # свои команды пользователя
-
-FAVORITES_FILE = os.path.join(BASE_DIR, "favorites.json")  # избранные папки командной строки
-
-HISTORY_FILE = os.path.join(BASE_DIR, "history.json")      # история команд
-
-ICONS_DIR = os.path.join(BASE_DIR, "icons")  # свои иконки плиток (копии выбранных картинок)
-
-# Настройки, которые являются глобальными горячими клавишами (чтобы не назначить одну и ту же дважды)
-HOTKEY_SETTINGS = ("hotkey_summon", "hotkey_command", "hotkey_notes")
-
-# Иконка окна и панели задач
-APP_NAME = "Aura NOX Launcher"   # название программы: заголовки окон, «О программе», условия
+APP_NAME  = "Aura NOX Launcher"
 ICON_PATH = os.path.join(RESOURCE_DIR, "icon.ico")
 
+HOTKEY_SETTINGS = ("hotkey_summon", "hotkey_command", "hotkey_notes")
+
+DEFAULT_SETTINGS = {
+    "autostart":         False,
+    "background_mode":   False,
+    "after_launch":      "minimize",
+    "columns":           COLUMNS,
+    "max_tile_size":     MAX_TILE_SIZE,
+    "sidebar_width":     SIDEBAR_WIDTH,
+    "window_scale":      int(WINDOW_SCALE * 100),
+    "command_line":      True,
+    "command_blur":      True,
+    "add_tile_mode":     "file",  # что открывает «+»: "file" (выбор файла) или "search" (поиск программ); у поиска есть и своя плитка
+    "command_blur_strength": 50,
+    "command_blur_dim":  30,
+    "command_blur_fade": 140,
+    "hotkey_summon":     "ctrl+alt+space",
+    "hotkey_command":    "ctrl+alt+t",
+    "hotkey_notes":      "ctrl+alt+n",
+    "notes_hotkey":      True,
+    "notes_font_size":   14,
+    "notes_autosave_ms": 700,
+    "notes_sort":        "date",
+    "tile_icon_size":    60,
+    "tile_fill_color":   None,  # цвет «один для всех»: его получают новые плитки; None = палитра темы
+    "tile_label":        "inside",
+    "tile_show_key":     True,
+    "confirm_delete":    True,
+    "theme_mode":        "dark",
+    "theme_name":        "default",
+    "auto_icons":        True,
+    "show_notes_btn":    True,
+    "show_lock_btn":     True,
+    "show_perf_btn":     True,
+    "language":          "ru",
+    "terms_seen":        "",
+    "sounds_enabled":    True,
+    "sound_volume":      70,
+}

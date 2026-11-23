@@ -5,11 +5,11 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[('icon.ico', '.')], # Вот эта строка добавляет иконку в сборку
-    hiddenimports=['PIL', 'PIL._imagingtk', 'PIL._tkinter_finder'],
+    hiddenimports=['PIL'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=['tkinter', 'customtkinter', '_tkinter'],
     noarchive=False,
 )
 pyz = PYZ(a.pure)

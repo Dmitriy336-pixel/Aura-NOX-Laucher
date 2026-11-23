@@ -1,0 +1,10 @@
+[
+  {
+    "names": [
+      "ютуб"
+    ],
+    "description": "открывает ютуб",
+    "action": "open",
+    "target": "youtube.com"
+  }
+]

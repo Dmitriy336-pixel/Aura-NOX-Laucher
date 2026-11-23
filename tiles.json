@@ -1,0 +1,114 @@
+[
+  {
+    "type": "app",
+    "name": "ideaIU-2025.1.2",
+    "target": "C:\\Users\\uberf\\Downloads\\ideaIU-2025.1.2.exe",
+    "key": "1",
+    "color": "#7a0026",
+    "icon": "947331a915.png"
+  },
+  {
+    "type": "app",
+    "name": "VSCodeUserSetup-x64-1.106.3",
+    "target": "C:\\Users\\uberf\\Downloads\\VSCodeUserSetup-x64-1.106.3.exe",
+    "key": "6",
+    "color": "#a81c39",
+    "icon": "55e90976b2.png"
+  },
+  {
+    "type": "app",
+    "name": "VSCodeUserSetup-x64-1.101.2",
+    "target": "C:\\Users\\uberf\\Downloads\\VSCodeUserSetup-x64-1.101.2.exe",
+    "key": "2",
+    "color": "#d6004b",
+    "icon": "864bad62d4.png"
+  },
+  {
+    "type": "app",
+    "name": "504492924_17844280398506293_686454113472920419_n",
+    "target": "C:\\Users\\uberf\\Pictures\\gamesRES\\efwwef_files\\504492924_17844280398506293_686454113472920419_n.webp",
+    "key": "3",
+    "color": "#ff0055",
+    "icon": "b2abf5a25d.png"
+  },
+  {
+    "type": "app",
+    "name": "Blue Protocol Star Resonance",
+    "target": "C:\\Users\\uberf\\Desktop\\Новая папка\\Blue Protocol Star Resonance.lnk",
+    "key": "5",
+    "color": "#520033",
+    "icon": "2c5111eb6a.png"
+  },
+  {
+    "type": "app",
+    "name": "Git-2.53.0.2-64-bit",
+    "target": "C:\\Users\\uberf\\Downloads\\Git-2.53.0.2-64-bit.exe",
+    "key": "4",
+    "color": "#8f005c",
+    "icon": "88e8d782b7.png"
+  },
+  {
+    "type": "app",
+    "name": "Downloads",
+    "target": "C:\\Users\\uberf\\Downloads",
+    "key": "7",
+    "color": "#330022",
+    "icon": "078968dc23.png"
+  },
+  {
+    "type": "app",
+    "name": "Этот компьютер",
+    "target": "C:\\Users\\uberf\\Desktop\\Этот компьютер.lnk",
+    "key": "9",
+    "color": "#6b113a",
+    "icon": "b291211daf.png"
+  },
+  {
+    "type": "app",
+    "name": "Снимок экрана 2026-05-05 092006",
+    "target": "C:\\Users\\uberf\\Pictures\\Screenshots\\Снимок экрана 2026-05-05 092006.png",
+    "key": "q",
+    "color": "#7a0026",
+    "icon": "29a6c4f9b3.png"
+  },
+  {
+    "type": "app",
+    "name": "openscreen",
+    "target": "C:\\Program Files\\WindowsApps\\EtienneLescot.OpenScreen_2.2.2.0_x64__hedpjctvqwhq0\\app\\Openscreen.exe",
+    "key": "w",
+    "color": "#a81c39",
+    "icon": "32e35bde0f.png"
+  },
+  {
+    "type": "app",
+    "name": "Aura NOX Launcher",
+    "target": "C:\\Users\\uberf\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Aura NOX Launcher.lnk",
+    "key": "e",
+    "color": "#d6004b",
+    "icon": "9cb9d397a2.png"
+  },
+  {
+    "type": "app",
+    "name": "Heatwarped",
+    "target": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Heatwarped Demo\\Heatwarped.exe",
+    "key": "r",
+    "color": "#ff0055",
+    "icon": "42dcbbae90.png"
+  },
+  {
+    "type": "app",
+    "name": "anemoi_RUS",
+    "target": "C:\\Users\\uberf\\Downloads\\anemoi_rus\\anemoi_RUS.exe",
+    "key": "t",
+    "color": "#520033",
+    "icon": "b8d6f1987c.png"
+  },
+  {
+    "type": "app",
+    "name": "Viber",
+    "target": "C:\\Users\\uberf\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Viber\\Viber.lnk",
+    "key": "8",
+    "color": "#8f005c",
+    "icon": "1b03c7ffea.png"
+  }
+]

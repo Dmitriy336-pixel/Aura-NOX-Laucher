@@ -22,6 +22,6 @@ The launcher starts programs and runs commands that you set up yourself: tiles a
 Tiles, settings and notes are stored only on your computer. The program does not send anything to the internet and does not collect anything. Commands that open websites (for example, search) open them in your browser at your request.
 
 8. Third-party components
-The program uses Python, CustomTkinter and Pillow, which have their own licenses. Themes, sounds and icons that you add remain the property of their authors.
+The program uses Python, PySide6 (Qt) and Pillow, which have their own licenses. Themes, sounds and icons that you add remain the property of their authors.
 
 Copyright (c) 2026 Dmitriy336-pixel
